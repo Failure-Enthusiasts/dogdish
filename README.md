@@ -24,3 +24,4 @@ Destroy the database with the docker command below:
 ``` bash
 docker compose -f storage/compose.yaml down
 ```
+
