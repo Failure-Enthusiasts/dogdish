@@ -1,0 +1,24 @@
+{
+  "event": [
+    {
+      "cater": "Mighty Quinn's BBQ",
+      "food": [
+        {
+          "name": "BBQ Ribs",
+          "description": "",
+          "preference": [
+            {
+              "name": "Gluten Free",
+              "symbol": "example link"
+            }
+          ],
+          "allergen": [
+            "Garlic",
+            "Nightshades",
+            "Pork"
+          ]
+        }
+      ]
+    }
+  ]
+}
