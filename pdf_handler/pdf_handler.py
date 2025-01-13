@@ -2,7 +2,7 @@ from PyPDF2 import PdfReader
 import json
 
 # Path to the uploaded PDF file
-pdf_path = 'test-two.pdf'  # Replace with the actual path to your PDF file
+pdf_path = 'test-menu.pdf'  # Replace with the actual path to your PDF file
 
 # Read the PDF content
 reader = PdfReader(pdf_path)
