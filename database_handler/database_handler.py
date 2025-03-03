@@ -16,22 +16,22 @@ def hello_world():
 @app.route("/intake", methods=["POST"])
 def intake():
     incoming_event = request.json  # receives JSON
-    print(f"Incoming event: {incoming_event}")
-
+    print(f"Incoming events: {incoming_event}")
 
     # verify it's an Event
-    try:
-        is_event = Event.model_validate_json(incoming_event['event'])
-        if is_event:
-            # post to the DB as incoming_event['event']
-            print(f"is_event: {is_event}")
-            return "Event Created!"
+    for event in incoming_event["event"]:
+        try:
+            is_event = Event.model_validate(event)
+            if is_event:
+                # post to the DB as incoming_event['event']
+                print(f"is_event: {is_event}")
+                return "Event Created!"
 
-    except ValidationError as e:
-        # raise an error
-        return f"Validation Error: {e}"
+        except ValidationError as e:
+            # raise an error
+            return f"Validation Error: {e}"
     
-    return "Event not created!"
+    return '{"message": "ok"}'
     
 
 
