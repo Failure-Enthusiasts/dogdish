@@ -12,11 +12,13 @@ class Food(BaseModel):
     name: str
     description: str
     preferences: list[Preferences]
+    allergens: list[str]
 
 class Event(BaseModel):
     cater: str
-    event_date: date
+    event_date: str
     food: list[Food]
 
 def create_event_obj(data):
     pass
+
