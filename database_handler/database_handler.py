@@ -1,6 +1,6 @@
 # boilerplate flask app: https://flask.palletsprojects.com/en/stable/quickstart/
 from flask import Flask, request
-from database_handler.db import Event
+from database_handler.db import Event, insert_event
 from pydantic import ValidationError
 
 
@@ -24,7 +24,8 @@ def intake():
             is_event = Event.model_validate(event)
             if is_event:
                 # post to the DB as incoming_event['event']
-                print(f"is_event: {is_event}")
+                insert_event(is_event)
+
                 return "Event Created!"
 
         except ValidationError as e:
