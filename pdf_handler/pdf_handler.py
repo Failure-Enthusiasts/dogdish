@@ -21,18 +21,21 @@ def scrape_menu(pdf_file_path):
     # Extract text from each page
     for page in reader.pages:
         page_text = page.extract_text()
+        print(page_text)
         if page_text:
             # Split text into lines
             # Split on newlines, strip whitespace
             page_lines = [l.strip() for l in page_text.split('\n') if l.strip()]
+            # print(page_lines)
             lines.extend(page_lines)
+
 
             # DELETE: page_lines = page_text.split('\n')
             # Clean up whitespace
             # lines.extend([l.strip() for l in page_lines if l.strip()])
 
     skip_lines = [
-        "For more info, scan QR code or visit app.zerocater.com/dashboard"
+        "app.zerocater.com/dashboard"
     ]
 
     # The first line is assumed to be the caterer name (e.g. "Mighty Quinn's BBQ")
@@ -42,7 +45,7 @@ def scrape_menu(pdf_file_path):
         cater_name = "Unknown Caterer"
 
     # Start parsing from the second line onward
-    i = 1
+    i = 7
     while i < len(lines):
         line = lines[i]
 
