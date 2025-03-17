@@ -1,18 +1,19 @@
 from google import genai
 from google.genai.models import types
 import pathlib
-import httpx
+import os
+from datetime import date
 
-
-# doc_url = "./test-menu.pdf"  # Replace with the actual URL of your PDF
+current_year = date.today().year
 
 # Retrieve and encode the PDF byte
-filepath = pathlib.Path('./test-menu.pdf')
-# filepath.write_bytes(httpx.get(doc_url).content)
-
-client = genai.Client(api_key="your api key")
-sys_instruct = """
-As an OCR platform, your main task is to extract all the details from all pdf files. The structure of your output needs to follow the following example:
+filepath = pathlib.Path('./test-menu2.pdf')
+api = os.environ.get("GEMINI_API_KEY")
+client =  genai.Client(api_key=api)
+sys_instruct = f"""
+As an OCR platform, your main task is to extract all the details from all pdf files. The structure of your output needs to follow the following guidelines:
+At the top of the PDF file the name of the caterer is displayed. This should be extracted and included in the output.
+Below the name of the caterer is the date of the menu. This should be extracted and included in the output, this field will be called: event_date. An extra field below the date should be the same date in the format ISO 8601 - {current_year}-01-07, this field will be called: event_date_iso.
 `Title: Edamame Slaw`
 `Description: Cabbage slaw with edamame with cilantro, scallions, carrots, sesame lime vinaigrette, and sesame seeds.`
 `Preferences: VEGAN, GLUTEN FREE`
@@ -34,3 +35,4 @@ response = client.models.generate_content(
 
 )
 print(response.text)
+
