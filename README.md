@@ -32,3 +32,5 @@ docker compose -f storage/compose.yaml down
 cd database_handler
 flask --app database_handler run
 ```
+
+<test for Signed Commits!>
