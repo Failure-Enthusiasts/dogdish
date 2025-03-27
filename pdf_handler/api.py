@@ -1,22 +1,43 @@
-from typing import Union, Annotated
+from typing import Annotated
 import os
 
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI, File
+from pydantic import BaseModel, field_validator, ValidationError
 
 from pdf_genai import PDFGenAI
 
-app = FastAPI()
+app = FastAPI(
+    title="PDF Handler",
+    description="A service for converting PDF files to structured data",
+    version="0.0.1",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
 API_KEY = os.environ.get("GEMINI_API_KEY")
+
+class Food(BaseModel):
+    name: str
+    description: str
+    preferences: list[str]
+    allergens: list[str]
+    
+    @field_validator('preferences', 'allergens')
+    @classmethod
+    def to_lowercase(cls, value: list[str]) -> list[str]:
+        return [item.lower() for item in value]
+
+class Event(BaseModel):
+    caterer: str
+    event_date: str
+    event_date_iso: str
+    food: list[Food]
+
 
 
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+def health_check():
+    return {"version": app.version}
 
 
 @app.post("/api/v1/process_pdf")
@@ -25,20 +46,15 @@ def process_pdf(
 ):
     pdf_gen = PDFGenAI(API_KEY)
     res = pdf_gen.extract_pdf(file)
+    if res is None:
+        return {"error": "Failed to extract the PDF"}
 
-    print(res)
+    cleaned_res = res.strip("```json").strip("```")
 
-    return {"message": "It worked!!"}
+    try:
+        event = Event.model_validate_json(cleaned_res)
 
+    except ValidationError as e:
+        return {"error": "Failed to parsed the JSON response from the PDFGenAI", "details": e.errors()}
 
-@app.post("/files/")
-async def create_file(
-    file: Annotated[bytes, File()],
-    # fileb: Annotated[UploadFile, File()],
-    # token: Annotated[str, Form()],
-):
-    return {
-        "file_size": len(file),
-        # "token": token,
-        # "fileb_content_type": fileb.content_type,
-    }
+    return event
