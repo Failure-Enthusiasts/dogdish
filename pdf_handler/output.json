@@ -3,9 +3,9 @@
   "caterer": "Olive & Basil",
   "event_date": "Monday, March 17",
   "event_date_iso": "2025-03-17",
-  "menu_items": [
+  "food": [
     {
-      "title": "Balsamic Chicken",
+      "name": "Balsamic Chicken",
       "description": "Grilled chicken breast with blistered cherry tomatoes, confit garlic, balsamic glaze",
       "preferences": [],
       "allergens": [
@@ -14,7 +14,7 @@
       ]
     },
     {
-      "title": "Mediterranean Salmon",
+      "name": "Mediterranean Salmon",
       "description": "Salmon with olives, tomatoes, capers, garlic, scallions, red wine vinaigrette",
       "preferences": [
         "PESCATARIAN"
@@ -27,7 +27,7 @@
       ]
     },
     {
-      "title": "Vegan Agri Dolce Eggplant and Mixed Vegetables",
+      "name": "Vegan Agri Dolce Eggplant and Mixed Vegetables",
       "description": "Braised eggplant, seasonal vegetables with sugar, red wine vinegar, basil and garlic",
       "preferences": [
         "VEGAN",
@@ -40,7 +40,7 @@
       ]
     },
     {
-      "title": "Garden Salad",
+      "name": "Garden Salad",
       "description": "Mixed green salad with cucumbers, tomatoes, carrots and peppers with side of dressing.",
       "preferences": [
         "VEGAN",
@@ -51,7 +51,7 @@
       ]
     },
     {
-      "title": "Garlic Bread",
+      "name": "Garlic Bread",
       "description": "Garlic bread",
       "preferences": [],
       "allergens": [
@@ -61,7 +61,7 @@
       ]
     },
     {
-      "title": "Gluten Free Spaghetti Aglio Olio - Vegan/No Cheese",
+      "name": "Gluten Free Spaghetti Aglio Olio - Vegan/No Cheese",
       "description": "Gluten Free Spaghetti with olive oil - No Cheese",
       "preferences": [
         "VEGAN"
@@ -71,7 +71,7 @@
       ]
     },
     {
-      "title": "Italian Roasted Vegetables",
+      "name": "Italian Roasted Vegetables",
       "description": "Roasted zucchini, eggplant, peppers with herbs.",
       "preferences": [
         "VEGAN",
@@ -83,7 +83,7 @@
       ]
     },
     {
-      "title": "Linguini Aglio Olio - Vegan/No Cheese",
+      "name": "Linguini Aglio Olio - Vegan/No Cheese",
       "description": "Linguini with olive oil - No Cheese",
       "preferences": [
         "VEGAN"
@@ -94,7 +94,7 @@
       ]
     },
     {
-      "title": "Green Goddess Dressing",
+      "name": "Green Goddess Dressing",
       "description": "Served with garden salad.",
       "preferences": [
         "VEGAN"
