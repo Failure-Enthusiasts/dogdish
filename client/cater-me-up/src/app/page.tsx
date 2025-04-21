@@ -1,6 +1,26 @@
 'use client';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { datadogRum } from '@datadog/browser-rum';
+import { reactPlugin } from '@datadog/browser-rum-react';
+
+
+datadogRum.init({
+    applicationId: '1819a01a-b7b4-471f-bdca-1e35d3f2bd43',
+    clientToken: 'pub96ac2515546ca98f9fab346453907a4a',
+    site: 'datadoghq.com',
+    service:'cater_me_up',
+    env: 'dev',
+    version: '0.0.1',
+    sessionSampleRate:  100,
+    sessionReplaySampleRate: 100,
+    defaultPrivacyLevel: 'mask-user-input',
+    plugins: [reactPlugin({ router: true })],
+    trackResources: true,
+    trackLongTasks: true,
+    trackUserInteractions: true,
+});
+
 
 // If you have a fixed set of menus, you can define them here
 interface Menu {
@@ -14,7 +34,7 @@ interface Menu {
 const availableMenus: Menu[] = [
   {
     catererSlug: 'olive-and-basil',
-    dateSlug: '2024-03-17',
+    dateSlug: '2025-03-17',
     catererName: 'Olive & Basil',
     eventDate: 'Monday, March 17'
   },

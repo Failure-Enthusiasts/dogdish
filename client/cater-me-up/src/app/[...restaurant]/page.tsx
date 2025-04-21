@@ -1,10 +1,173 @@
 'use client';
-import React, { useState } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useParams, notFound } from 'next/navigation';
+import { type Menu } from '@/utils/menuHelpers';
+
 
 // Sample menu data from the JSON
-const menuData = {
-  "caterer": "Olive & Basil",
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const sampleMenuData: Menu = {
+  caterer: "Olive & Basil",
+  event_date: "Monday, March 17",
+  event_date_iso: "2025-03-17",
+  menu_items: [
+      {
+        "title": "Balsamic Chicken",
+        "description": "Grilled chicken breast with blistered cherry tomatoes, confit garlic, balsamic glaze",
+        "preferences": [],
+        "allergens": [
+          "Garlic",
+          "Nightshades"
+        ]
+      },
+      {
+        "title": "Mediterranean Salmon",
+        "description": "Salmon with olives, tomatoes, capers, garlic, scallions, red wine vinaigrette",
+        "preferences": [
+          "PESCATARIAN"
+        ],
+        "allergens": [
+          "Garlic",
+          "Nightshades",
+          "Onions",
+          "Seafood"
+        ]
+      },
+      {
+        "title": "Vegan Agri Dolce Eggplant and Mixed Vegetables",
+        "description": "Braised eggplant, seasonal vegetables with sugar, red wine vinegar, basil and garlic",
+        "preferences": [
+          "VEGAN",
+          "VEGETARIAN"
+        ],
+        "allergens": [
+          "Garlic",
+          "Nightshades",
+          "Onions"
+        ]
+      },
+      {
+        "title": "Garden Salad",
+        "description": "Mixed green salad with cucumbers, tomatoes, carrots and peppers with side of dressing.",
+        "preferences": [
+          "VEGAN",
+          "LIGHT CARB"
+        ],
+        "allergens": [
+          "Nightshades"
+        ]
+      },
+      {
+        "title": "Garlic Bread",
+        "description": "Garlic bread",
+        "preferences": [],
+        "allergens": [
+          "Dairy",
+          "Garlic",
+          "Wheat"
+        ]
+      },
+      {
+        "title": "Gluten Free Spaghetti Aglio Olio - Vegan/No Cheese",
+        "description": "Gluten Free Spaghetti with olive oil - No Cheese",
+        "preferences": [
+          "VEGAN"
+        ],
+        "allergens": [
+          "Garlic"
+        ]
+      },
+      {
+        "title": "Italian Roasted Vegetables",
+        "description": "Roasted zucchini, eggplant, peppers with herbs.",
+        "preferences": [
+          "VEGAN",
+          "LIGHT CARB"
+        ],
+        "allergens": [
+          "Garlic",
+          "Nightshades"
+        ]
+      },
+      {
+        "title": "Linguini Aglio Olio - Vegan/No Cheese",
+        "description": "Linguini with olive oil - No Cheese",
+        "preferences": [
+          "VEGAN"
+        ],
+        "allergens": [
+          "Garlic",
+          "Wheat"
+        ]
+      },
+      {
+        "title": "Green Goddess Dressing",
+        "description": "Served with garden salad.",
+        "preferences": [
+          "VEGAN"
+        ],
+        "allergens": []
+      }
+    ]
+  };
+
+// Let's create a type for our menu data
+// type MenuData = {
+//   caterer: string;
+//   event_date: string;
+//   event_date_iso: string;
+//   menu_items: Array<{
+//     title: string;
+//     description: string;
+//     preferences: string[];
+//     allergens: string[];
+//   }>;
+// };
+
+// Helper function to convert a string to slug format
+const toSlug = (str: string) => {
+  console.log('Converting slug:', str);
+  // First, deal with the spaces and special characters then deal with regular characters.
+  const slug = str.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and').replace(/[^a-z0-9-]/g, '');
+  console.log('Resulting slug:', slug);
+  return slug;
+};
+// Helper function to validate if a menu exists
+const isValidMenu = (dateSlug: string, catererSlug: string, availableMenus: Menu[]) => {
+  console.log('Validating menu with:', { dateSlug, catererSlug });
+  console.log('Available menus:', availableMenus);
+  
+  const isValid = availableMenus.some(menu => {
+    const menuSlug = toSlug(menu.caterer);
+    console.log('Comparing:', {
+      dates: { provided: dateSlug, available: menu.event_date_iso },
+      slugs: { provided: catererSlug, converted: menuSlug }
+    });
+    return menu.event_date_iso === dateSlug && menuSlug === catererSlug;
+  });
+  
+  console.log('Menu is valid:', isValid);
+  return isValid;
+};
+
+const MenuRenderer = () => {
+  const params = useParams();
+  const [activeFilter, setActiveFilter] = useState('No Preferences');
+  const [activeAllergenFilter, setActiveAllergenFilter] = useState('All Allergens');
+  const [menuData, setMenuData] = useState<Menu | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Extract date and caterer from the slug
+  const [dateSlug, catererSlug] = params.restaurant as string[];
+
+  useEffect(() => {
+    const fetchMenuData = async () => {
+      try {
+        // In a real app, you'd fetch this from an API
+        // For now, we'll use the static data
+        const availableMenus = [
+          {
+          "caterer": "Olive & Basil",
   "event_date": "Monday, March 17",
   "event_date_iso": "2025-03-17",
   "menu_items":  [
@@ -106,27 +269,47 @@ const menuData = {
         "allergens": []
       }
     ]
-  };
+          }
+        ];
 
+        console.log('Checking menu validity for:', { dateSlug, catererSlug });
+        
+        // Check if the requested menu exists
+        if (!isValidMenu(dateSlug, catererSlug, availableMenus)) {
+          console.log('Menu not found, redirecting to 404');
+          notFound();
+          return;
+        }
 
-  type MenuParams = {
-    params: {
-      slug: string[]
-    }
+        // Find the matching menu
+        const menu = availableMenus.find(m => 
+          m.event_date_iso === dateSlug && toSlug(m.caterer) === catererSlug
+        );
+
+        console.log('Found menu:', menu);
+        setMenuData(menu || null);
+      } catch (error) {
+        console.error('Error fetching menu:', error);
+        notFound();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMenuData();
+  }, [dateSlug, catererSlug]);
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
-const MenuRenderer = ({}: MenuParams) => {
-    // The params.slug will be an array where:
-  // params.slug[0] would be the event date ISO
-  // params.slug[1] would be the caterer name
-  const params = useParams();
-  const [activeFilter, setActiveFilter] = useState('No Preferences');
-  const [activeAllergenFilter, setActiveAllergenFilter] = useState('All Allergens');
-   // Extract caterer and date from the slug
-   const [dateSlug, catererSlug] = params.restaurant as string[];
+  if (!menuData) {
+    notFound();
+    return null;
+  }
 
-   // Get unique dietary preferences
-   const dietaryPreferences = ['No Preferences', 'Vegan', 'Vegetarian', 'Pescatarian'];
+  // Get unique dietary preferences
+  const dietaryPreferences = ['No Preferences', 'Vegan', 'Vegetarian', 'Pescatarian'];
   // Get unique allergens
   // TODO: fetch unique allergens from menu items 
   // const allergens = [...new Set(menuData.menu_items.flatMap(item => item.allergens))];
@@ -155,12 +338,12 @@ const MenuRenderer = ({}: MenuParams) => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">{catererSlug}</h1>
+          <h1 className="text-4xl font-bold mb-2">{menuData.caterer}</h1>
           <div className="flex items-center justify-center text-gray-600">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span>{dateSlug}</span>
+            <span>{menuData.event_date}</span>
           </div>
         </div>
         
