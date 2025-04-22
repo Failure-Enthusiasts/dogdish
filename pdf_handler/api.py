@@ -1,18 +1,22 @@
 from typing import Annotated
 import os
 
-from fastapi import FastAPI, File
+from fastapi import FastAPI, File, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, field_validator, ValidationError
 
 from pdf_genai import PDFGenAI
+from logger import logger
+
 
 app = FastAPI(
     title="PDF Handler",
     description="A service for converting PDF files to structured data",
     version="0.0.1",
     docs_url="/docs",
-    redoc_url="/redoc",
+    redoc_url="/redoc"
 )
+
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
 
@@ -34,20 +38,21 @@ class Event(BaseModel):
     food: list[Food]
 
 
+@app.get("/", name="Health Check")
+def health_check(request: Request):
+    logger.info("Health check", extra={"version": app.version, "client_ip": request.client.host})
+    return JSONResponse(status_code=200, content={"version": app.version})
 
-@app.get("/")
-def health_check():
-    return {"version": app.version}
 
-
-@app.post("/api/v1/process_pdf")
+@app.post("/api/v1/process_pdf",name="Process PDF")
 def process_pdf(
     file: Annotated[bytes, File()]
 ):
     pdf_gen = PDFGenAI(API_KEY)
     res = pdf_gen.extract_pdf(file)
+
     if res is None:
-        return {"error": "Failed to extract the PDF"}
+        return JSONResponse(status_code=400, content={"error": "Failed to extract data from the PDF"})
 
     cleaned_res = res.strip("```json").strip("```")
 
@@ -55,6 +60,6 @@ def process_pdf(
         event = Event.model_validate_json(cleaned_res)
 
     except ValidationError as e:
-        return {"error": "Failed to parsed the JSON response from the PDFGenAI", "details": e.errors()}
+        return JSONResponse(status_code=400, content={"error": "Data generated was not in the appropriate format", "details": e.errors()})
 
-    return event
+    return JSONResponse(status_code=200, content=event.model_dump())

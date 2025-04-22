@@ -1,12 +1,21 @@
+from datetime import date
+import json
+
 from google import genai
 from google.genai.models import types
-from datetime import date
 
+from logger import logger
 
 class PDFGenAI:
-  def __init__(self, api_key: str):
+  def __init__(self,api_key: str, model:str = "gemini-2.0-flash"):
+    logger.debug("Initializing PDFGenAI")
+
     self.AI_CLIENT =  genai.Client(api_key=api_key)
+    self.model = model
+
     current_year = date.today().year
+    logger.debug("current year captured", extra={"current_year": current_year})
+
     self.system_prompt = f"""
     As an OCR platform, your main task is to extract all the details from all pdf files. The structure of your 
     output needs to follow the following guidelines:
@@ -31,10 +40,13 @@ class PDFGenAI:
     - event_date_iso
     - food
     """
+    logger.debug("PDFGenAI initialized", extra={"model": self.model, "system_prompt": self.system_prompt})
 
   def extract_pdf(self, file_bytes: bytes):
+    logger.debug("Extracting PDF", extra={"model": self.model, "system_prompt": self.system_prompt})
+
     response = self.AI_CLIENT.models.generate_content(
-      model="gemini-2.0-flash",
+      model=self.model,
       config=types.GenerateContentConfig(
         system_instruction=self.system_prompt),
         contents=[
@@ -44,5 +56,14 @@ class PDFGenAI:
           ),
         "process this pdf file accurately as per the instructions"]
     )
+
+    if response.text is None:
+      try:
+        data = json.loads(response.text)
+        logger.debug("PDF extracted", extra={"model": self.model, "system_prompt": self.system_prompt, "extracted_data": data})
+
+      except json.JSONDecodeError as e:
+        logger.error("Failed to parse JSON", extra={"error": e, "text": response.text})
+        return None
 
     return response.text
