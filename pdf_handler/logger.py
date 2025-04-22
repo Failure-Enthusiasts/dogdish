@@ -1,14 +1,16 @@
 import atexit
 import logging.config
 import logging.handlers
-from pythonjsonlogger import jsonlogger
 import logging
 import queue
+import os
+
+from pythonjsonlogger import jsonlogger
 
 
 def setup_logging():
     root_logger = logging.getLogger("root")
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
 
     formatter = jsonlogger.JsonFormatter(
         "%(asctime)s %(levelname)s %(filename)s %(pathname)s %(lineno)d %(message)s"
