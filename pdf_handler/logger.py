@@ -10,7 +10,7 @@ from pythonjsonlogger import jsonlogger
 
 def setup_logging():
     root_logger = logging.getLogger("root")
-    root_logger.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
+    root_logger.setLevel(os.environ.get("LOG_LEVEL", "DEBUG"))
 
     formatter = jsonlogger.JsonFormatter(
         "%(asctime)s %(levelname)s %(filename)s %(pathname)s %(lineno)d %(message)s"

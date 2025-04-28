@@ -57,13 +57,12 @@ class PDFGenAI:
         "process this pdf file accurately as per the instructions"]
     )
 
-    if response.text is None:
-      try:
-        data = json.loads(response.text)
-        logger.debug("PDF extracted", extra={"model": self.model, "system_prompt": self.system_prompt, "extracted_data": data})
+    try:
+      data = json.loads(response.text)
+      logger.debug("PDF extracted", extra={"model": self.model, "system_prompt": self.system_prompt, "extracted_data": data})
+      return response.text
 
-      except json.JSONDecodeError as e:
-        logger.error("Failed to parse JSON", extra={"error": e, "text": response.text})
-        return None
+    except json.JSONDecodeError as e:
+      logger.error("Failed to parse JSON", extra={"error": e, "text": response.text})
+      return None
 
-    return response.text
