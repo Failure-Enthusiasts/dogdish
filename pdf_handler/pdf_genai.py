@@ -25,9 +25,9 @@ class PDFGenAI:
 
     [
       {
-        "day": "MONDAY",
+        "day": "monday",
         "iso_date": "2025-05-12",
-        "cuisine": "Moroccan",
+        "cuisine": "moroccan",
         "entrees_and_sides": [
           {
             "name": "Shabazi Spiced Chicken Souvlaki served with tzatziki sauce",
@@ -69,32 +69,6 @@ class PDFGenAI:
           }
         ],
         "salad_bar": {
-          "dressings": [
-            {
-              "name": "Caesar Dressing",
-              "allergens": [
-                "egg",
-                "dairy",
-                "soy"
-              ],
-              "preferences": []
-            },
-            {
-              "name": "Lemon-Dijon Vinaigrette",
-              "allergens": [],
-              "preferences": []
-            },
-            {
-              "name": "Apple Cider Vinaigrette",
-              "allergens": [],
-              "preferences": []
-            },
-            {
-              "name": "Italian Dressing",
-              "allergens": [],
-              "preferences": []
-            }
-          ],
           "toppings": [
             {
               "name": "Baby Kale",
@@ -138,17 +112,48 @@ class PDFGenAI:
               ],
               "preferences": []
             }
+          ],
+          "dressings": [
+            {
+              "name": "Caesar Dressing",
+              "allergens": [
+                "egg",
+                "dairy",
+                "soy"
+              ],
+              "preferences": []
+            },
+            {
+              "name": "Lemon-Dijon Vinaigrette",
+              "allergens": [],
+              "preferences": []
+            },
+            {
+              "name": "Apple Cider Vinaigrette",
+              "allergens": [],
+              "preferences": []
+            },
+            {
+              "name": "Italian Dressing",
+              "allergens": [],
+              "preferences": []
+            }
           ]
         }
       }
       ...
     ]
     
-    - Note that the above example is for 1 day of the week, I will need you to provide the data for the entire week on 
-    the first PDF file. 
+    Important Things to keep in mind:
 
-    - Note that you will need to find what year the days are for. A general rule is that the days list are for dates in 
-    the future so look for the next occurrence of the date listed.
+    - The above example is for 1 day of the week, I will need you to provide the data for the entire week on the first 
+    PDF file. 
+
+    - You will need to find what year the days are for because the PDF will not provide the year. A general rule is 
+    that the days listed are for dates in the future so look for the next occurrence of the date listed and see if it 
+    lands on our current year or the next year.
+
+    - Please keep the days of the week and the cuisine names in lowercase.
     """
     logger.debug("PDFGenAI initialized", extra={"model": self.model, "system_prompt": self.system_prompt})
 
