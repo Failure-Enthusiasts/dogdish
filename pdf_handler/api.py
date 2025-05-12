@@ -44,9 +44,10 @@ def health_check(request: Request):
     return JSONResponse(status_code=200, content={"version": app.version})
 
 
-@app.post("/api/v1/process_pdf",name="Process PDF")
+@app.post("/api/v1/process_pdf", name="Process PDF")
 def process_pdf(
-    file: Annotated[bytes, File()]
+    file: Annotated[bytes, File()],
+    request: Request
 ):
     pdf_gen = PDFGenAI(API_KEY)
     res = pdf_gen.extract_pdf(file)
