@@ -16,29 +16,139 @@ class PDFGenAI:
     current_year = date.today().year
     logger.debug("current year captured", extra={"current_year": current_year})
 
-    self.system_prompt = f"""
+    self.system_prompt = """
     As an OCR platform, your main task is to extract all the details from all pdf files. The structure of your 
     output needs to follow the following guidelines:
-    At the top of the PDF file the name of the caterer is displayed. This should be extracted and included in the 
-    output.
-    Below the name of the caterer is the date of the menu. This should be extracted and included in the output, 
-    this field will be called: event_date. An extra field below the date should be the same date in the format 
-    ISO 8601 - {current_year}-01-07, this field will be called: event_date_iso.
-    `name: Edamame Slaw`
-    `Description: Cabbage slaw with edamame with cilantro, scallions, carrots, sesame lime vinaigrette, and sesame 
-    seeds.`
-    `Preferences: VEGAN, GLUTEN FREE`
-    `Allergens: Cilantro, Onions, Sesame, Soy`
 
-    If any of these sections are empty on the PDF, always include them in the output but leave them as an empty 
-    string for the description and empty array for the rest. 
+    The PDF file is a menu showing the food that will servered for a particular day. I just need you to focus on the 
+    first PDF file. Once you have extracted the data, I will need to structured in the following JSON format:
 
-    Please return formatted JSON.
-    I expecte to see the following fields in the output:
-    - caterer
-    - event_date
-    - event_date_iso
-    - food
+    [
+      {
+        "day": "MONDAY",
+        "iso_date": "2025-05-12",
+        "cuisine": "Moroccan",
+        "entrees_and_sides": [
+          {
+            "name": "Shabazi Spiced Chicken Souvlaki served with tzatziki sauce",
+            "allergens": [
+              "dairy"
+            ],
+            "preferences": []
+          },
+          {
+            "name": "Moroccan Harissa & Preserved Lemon Lamb Stew served with Harissa Yogurt",
+            "allergens": [
+              "dairy"
+            ],
+            "preferences": []
+          },
+          {
+            "name": "Toasted Farroto, Asparagus, Tomato, Cucumber, Feta Cheese",
+            "allergens": [
+              "gluten",
+              "dairy"
+            ],
+            "preferences": [
+              "vegetarian"
+            ]
+          },
+          {
+            "name": "Ras al Hanout Sauteed Spring Green Beans",
+            "allergens": [],
+            "preferences": [
+              "vegan"
+            ]
+          },
+          {
+            "name": "Kale Wild Rice with Lemon Agave Dressing",
+            "allergens": [],
+            "preferences": [
+              "vegan"
+            ]
+          }
+        ],
+        "salad_bar": {
+          "dressings": [
+            {
+              "name": "Caesar Dressing",
+              "allergens": [
+                "egg",
+                "dairy",
+                "soy"
+              ],
+              "preferences": []
+            },
+            {
+              "name": "Lemon-Dijon Vinaigrette",
+              "allergens": [],
+              "preferences": []
+            },
+            {
+              "name": "Apple Cider Vinaigrette",
+              "allergens": [],
+              "preferences": []
+            },
+            {
+              "name": "Italian Dressing",
+              "allergens": [],
+              "preferences": []
+            }
+          ],
+          "toppings": [
+            {
+              "name": "Baby Kale",
+              "allergens": [],
+              "preferences": []
+            },
+            {
+              "name": "Za’atar Spiced Chickpeas",
+              "allergens": [],
+              "preferences": []
+            },
+            {
+              "name": "Cherry Tomatoes",
+              "allergens": [],
+              "preferences": []
+            },
+            {
+              "name": "Sliced Hot House Cucumbers",
+              "allergens": [],
+              "preferences": []
+            },
+            {
+              "name": "Shaved Cello Carrot Coins",
+              "allergens": [],
+              "preferences": []
+            },
+            {
+              "name": "Turmeric Cauliflower",
+              "allergens": [],
+              "preferences": []
+            },
+            {
+              "name": "Tabbouleh",
+              "allergens": [],
+              "preferences": []
+            },
+            {
+              "name": "Goat Cheese",
+              "allergens": [
+                "dairy"
+              ],
+              "preferences": []
+            }
+          ]
+        }
+      }
+      ...
+    ]
+    
+    - Note that the above example is for 1 day of the week, I will need you to provide the data for the entire week on 
+    the first PDF file. 
+
+    - Note that you will need to find what year the days are for. A general rule is that the days list are for dates in 
+    the future so look for the next occurrence of the date listed.
     """
     logger.debug("PDFGenAI initialized", extra={"model": self.model, "system_prompt": self.system_prompt})
 
