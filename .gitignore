@@ -1,9 +1,12 @@
+##### Generic Ignores #####
 .env
 .venv
 
-# Created by https://www.toptal.com/developers/gitignore/api/python
-# Edit at https://www.toptal.com/developers/gitignore?templates=python
+##### Project Specific Ignores #####
+### pdf_handler ###
+pdf_handler/logs
 
+##### Language Specific Ignores #####
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -127,8 +130,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
-.venv
 env/
 venv/
 ENV/
@@ -176,7 +177,5 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
-# End of https://www.toptal.com/developers/gitignore/api/python
+# MacOS
 .DS_Store
-pdf_handler/test-menu1.pdf
-pdf_handler/test-menu2.pdf
