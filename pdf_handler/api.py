@@ -17,7 +17,6 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 class Item(BaseModel):
@@ -102,3 +101,18 @@ def process_pdf(
     content = events.model_dump()
     logger.info("PDF processed successfully", extra={"pdf_data": content, "client_ip": request.client.host})
     return JSONResponse(status_code=200, content=content)
+
+def save_events(
+    events: Events,
+    request: Request
+):
+    logger.info("Saving events", extra={"events": events.model_dump(), "client_ip": request.client.host})
+    return JSONResponse(status_code=200, content={"message": "Events saved successfully"})
+
+app.add_api_route(
+    "/api/v1/save_events",
+    save_events,
+    name="Save Events",
+    methods=["POST"],
+    status_code=200
+)
