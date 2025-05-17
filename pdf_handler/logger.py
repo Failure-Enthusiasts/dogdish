@@ -8,9 +8,10 @@ import os
 from pythonjsonlogger import jsonlogger
 
 
-def setup_logging():
+def new_logger(log_level: str):
     root_logger = logging.getLogger("root")
-    root_logger.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
+    root_logger.setLevel(log_level)
+
     logger_type = os.environ.get("LOGGER_TYPE", "STDOUT").upper()
     logger_type_error = False
 
@@ -45,5 +46,3 @@ def setup_logging():
         root_logger.warning(f"LOGGER_TYPE '{logger_type}' is not valid, using STDOUT")
 
     return root_logger
-
-logger = setup_logging()

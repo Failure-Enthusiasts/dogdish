@@ -1,15 +1,23 @@
 from google import genai
 from google.genai.models import types
 from ddtrace import tracer
+from typing import Protocol
 
-from logger import logger
+class AppLogger(Protocol):
+    def info(self, message: str, extra: dict = {}):
+        ...
+    def warning(self, message: str, extra: dict = {}):
+        ...
+    def error(self, message: str, extra: dict = {}):
+        ...
+    def debug(self, message: str, extra: dict = {}):
+        ...
 
 class PDFGenAI:
   @tracer.wrap(service="pdfgenai", name="init")
-  def __init__(self,api_key: str, model:str = "gemini-2.0-flash"):
-    logger.debug("Initializing PDFGenAI")
-
+  def __init__(self, api_key: str, logger: AppLogger, model:str = "gemini-2.0-flash"):
     self.AI_CLIENT =  genai.Client(api_key=api_key)
+    self.logger = logger
     self.model = model
     self.system_prompt = """
     As an OCR platform, your main task is to extract all the details from all pdf files. The structure of your 
@@ -152,16 +160,17 @@ class PDFGenAI:
 
     - Please keep the days of the week and the cuisine names in lowercase.
     """
-    logger.info("PDFGenAI initialized")
-    logger.debug("PDFGenAI configuration", extra={"model": self.model, "system_prompt": self.system_prompt})
+    self.logger.info("PDFGenAI initialized")
+    self.logger.debug("PDFGenAI configuration", extra={"model": self.model, "system_prompt": self.system_prompt})
 
   @tracer.wrap(service="pdfgenai", name="extract_pdf")
   def extract_pdf(self, file_bytes: bytes):
-    logger.debug("Extracting PDF", extra={"model": self.model, "system_prompt": self.system_prompt})
+    self.logger.debug("Extracting PDF", extra={"model": self.model, "system_prompt": self.system_prompt})
 
-    response = self.AI_CLIENT.models.generate_content(
-      model=self.model,
-      config=types.GenerateContentConfig(
+    try:
+      response = self.AI_CLIENT.models.generate_content(
+        model=self.model,
+        config=types.GenerateContentConfig(
         system_instruction=self.system_prompt),
       contents=[
         types.Part.from_bytes(
@@ -169,15 +178,18 @@ class PDFGenAI:
           mime_type='application/pdf',
         ),
       "process this pdf file accurately as per the instructions"]
-    )
+      )
+    except genai.errors.ClientError as e:
+      self.logger.error(f"Error extracting PDF", extra={"error": e})
+      return None
 
     text = response.text
     if text is None:
       err = "No data was extracted from the PDF"
-      logger.error(err, extra={"error": err})
+      self.logger.error(err, extra={"error": err})
       return None
 
-    logger.debug("PDF extracted", extra={"extracted_data": text})
-    logger.info("PDF successfully extracted")
+    self.logger.debug("PDF extracted", extra={"extracted_data": text})
+    self.logger.info("PDF successfully extracted")
 
     return text
