@@ -31,6 +31,23 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$DATABASE_NAME" <<
 
   CREATE TYPE food_type_enum AS ENUM ('entrees_and_sides', 'salad_bar');
 
+  CREATE TABLE food (
+    id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+    cuisine_id UUID, 
+    event_id UUID,
+    name VARCHAR(255) NOT NULL,
+
+    CONSTRAINT fk_cuisine_id
+      FOREIGN KEY (cuisine_id)
+      REFERENCES cuisine(id)
+      ON DELETE CASCADE,
+
+    CONSTRAINT fk_event_id
+      FOREIGN KEY (event_id)
+      REFERENCES event(id)
+      ON DELETE CASCADE
+  );
+
   CREATE TABLE food_allergen (
     food_id UUID, 
     allergen_id UUID,
@@ -45,25 +62,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$DATABASE_NAME" <<
       REFERENCES allergen(id)
       ON DELETE CASCADE
   );
-
-
-  CREATE TABLE food (
-    id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
-    cuisine_id UUID, 
-    event_id UUID,
-    name VARCHAR(255) NOT NULL,
-
-    CONSTRAINT fk_cuisine_id
-      FOREIGN KEY (caterer_id)
-      REFERENCES caterer(id)
-      ON DELETE CASCADE,
-
-    CONSTRAINT fk_event_id
-      FOREIGN KEY (event_id)
-      REFERENCES event(id)
-      ON DELETE CASCADE
-  );
-
 
   GRANT ALL ON SCHEMA public TO $DATABASE_USER;
   GRANT ALL ON ALL TABLES IN SCHEMA public TO $DATABASE_USER;
