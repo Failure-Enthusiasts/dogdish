@@ -11,14 +11,15 @@ EOSQL
 
 # creating tables and grants
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$DATABASE_NAME" <<-EOSQL
-  CREATE TABLE caterer (
+  CREATE TABLE cuisine (
     id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL
   );
 
   CREATE TABLE event (
     id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL
+    date VARCHAR(255) NOT NULL,
+    iso_date DATE NOT NULL
   );
 
   CREATE TABLE allergen (
@@ -26,20 +27,33 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$DATABASE_NAME" <<
     name VARCHAR(255) NOT NULL
   );
 
-  CREATE TABLE preference (
-    id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
-    symbol VARCHAR(255) NOT NULL
+  CREATE TYPE preference_enum AS ENUM ('vegan', 'vegetarian');
+
+  CREATE TYPE food_type_enum AS ENUM ('entrees_and_sides', 'salad_bar');
+
+  CREATE TABLE food_allergen (
+    food_id UUID, 
+    allergen_id UUID,
+
+    CONSTRAINT fk_food_id
+      FOREIGN KEY (food_id)
+      REFERENCES food(id)
+      ON DELETE CASCADE,
+
+    CONSTRAINT fk_allergen_id
+      FOREIGN KEY (allergen_id)
+      REFERENCES allergen(id)
+      ON DELETE CASCADE
   );
+
 
   CREATE TABLE food (
     id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
-    caterer_id UUID, 
+    cuisine_id UUID, 
     event_id UUID,
     name VARCHAR(255) NOT NULL,
-    decription VARCHAR(255),
 
-    CONSTRAINT fk_caterer_id
+    CONSTRAINT fk_cuisine_id
       FOREIGN KEY (caterer_id)
       REFERENCES caterer(id)
       ON DELETE CASCADE,
@@ -50,19 +64,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$DATABASE_NAME" <<
       ON DELETE CASCADE
   );
 
-  CREATE TABLE food_preference (
-    food_id UUID, 
-    preference_id UUID,
-    CONSTRAINT fk_food_id
-      FOREIGN KEY (food_id)
-      REFERENCES food(id)
-      ON DELETE CASCADE,
-
-    CONSTRAINT fk_preference_id
-      FOREIGN KEY (preference_id)
-      REFERENCES event(id)
-      ON DELETE CASCADE
-  );
 
   GRANT ALL ON SCHEMA public TO $DATABASE_USER;
   GRANT ALL ON ALL TABLES IN SCHEMA public TO $DATABASE_USER;
