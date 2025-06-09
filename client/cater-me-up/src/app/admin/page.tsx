@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import { headers } from 'next/headers';
+import { useRouter } from 'next/navigation';
+// import { headers } from 'next/headers';
 import Link from 'next/link';
 
 interface MenuData {
@@ -16,6 +16,8 @@ interface MenuData {
 export default function AdminDashboard() {
   const [menuData, setMenuData] = useState<MenuData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
 
   useEffect(() => {
     // Check if the user is authenticated (client-side protection)
@@ -55,9 +57,7 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <Head>
-        <title>Admin Dashboard | Olive & Basil</title>
-      </Head>
+      <title>Admin Dashboard | Olive & Basil</title>
       
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white shadow">
