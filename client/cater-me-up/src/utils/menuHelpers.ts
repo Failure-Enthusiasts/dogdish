@@ -1,19 +1,28 @@
 export const toSlug = (str: string): string => {
-  // First, trim whitespace and convert to lowercase
+  // 1. Trim whitespace and convert to lowercase
   let slug = str.trim().toLowerCase();
   
-  // Replace '&' with 'and'
-  slug = slug.replace(/&/g, 'and');
+  // 2. Normalize accented characters (e.g. é -> e)
+  slug = slug.normalize('NFD').replace(/[̀-ͯ]/g, '');
   
-  // Replace multiple spaces with single dash
+  // 3. Replace one or more ampersands (&) with " and " (note the spaces)
+  slug = slug.replace(/&+/g, ' and ');
+
+  // 4. Trim again to remove leading/trailing spaces introduced by " and "
+  slug = slug.trim();
+
+  // 5. Replace multiple whitespace characters (including those from " and ") with a single hyphen
   slug = slug.replace(/\s+/g, '-');
   
-  // Remove any non-alphanumeric characters (except dashes)
+  // 6. Remove any characters that are not lowercase alphanumeric or hyphens
   slug = slug.replace(/[^a-z0-9-]/g, '');
   
-  // Remove multiple consecutive dashes
+  // 7. Consolidate multiple hyphens into a single hyphen
   slug = slug.replace(/-+/g, '-');
   
+  // 8. Remove leading or trailing hyphens (e.g. "-foo-" -> "foo")
+  slug = slug.replace(/^-+|-+$/g, '');
+
   return slug;
 };
 

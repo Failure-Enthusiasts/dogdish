@@ -18,7 +18,7 @@ describe('toSlug', () => {
 describe('isValidMenu', () => {
   const sampleMenus = [
     {
-      caterer: "Olive & Basil",
+      cuisine: "Olive & Basil",
       event_date: "Monday, March 17",
       event_date_iso: "2025-03-17",
       menu_items: []
