@@ -7,7 +7,7 @@ import { type Menu } from '@/utils/menuHelpers';
 // Sample menu data from the JSON
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const sampleMenuData: Menu = {
-  caterer: "Olive & Basil",
+  cuisine: "Olive & Basil", 
   event_date: "Monday, March 17",
   event_date_iso: "2025-03-17",
   menu_items: [
@@ -111,9 +111,11 @@ const sampleMenuData: Menu = {
     ]
   };
 
+
+
 // Let's create a type for our menu data
 // type MenuData = {
-//   caterer: string;
+//   cuisine: string; 
 //   event_date: string;
 //   event_date_iso: string;
 //   menu_items: Array<{
@@ -133,17 +135,17 @@ const toSlug = (str: string) => {
   return slug;
 };
 // Helper function to validate if a menu exists
-const isValidMenu = (dateSlug: string, catererSlug: string, availableMenus: Menu[]) => {
-  console.log('Validating menu with:', { dateSlug, catererSlug });
+const isValidMenu = (dateSlug: string, cuisineSlug: string, availableMenus: Menu[]) => {
+  console.log('Validating menu with:', { dateSlug, cuisineSlug });
   console.log('Available menus:', availableMenus);
   
   const isValid = availableMenus.some(menu => {
-    const menuSlug = toSlug(menu.caterer);
+    const menuSlug = toSlug(menu.cuisine);
     console.log('Comparing:', {
       dates: { provided: dateSlug, available: menu.event_date_iso },
-      slugs: { provided: catererSlug, converted: menuSlug }
+      slugs: { provided: cuisineSlug, converted: menuSlug }
     });
-    return menu.event_date_iso === dateSlug && menuSlug === catererSlug;
+    return menu.event_date_iso === dateSlug && menuSlug === cuisineSlug;
   });
   
   console.log('Menu is valid:', isValid);
@@ -157,8 +159,8 @@ const MenuRenderer = () => {
   const [menuData, setMenuData] = useState<Menu | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Extract date and caterer from the slug
-  const [dateSlug, catererSlug] = params.restaurant as string[];
+  // Extract date and cuisine from the slug 
+  const [dateSlug, cuisineSlug] = params.cuisine as string[];
 
   useEffect(() => {
     const fetchMenuData = async () => {
@@ -167,7 +169,7 @@ const MenuRenderer = () => {
         // For now, we'll use the static data
         const availableMenus = [
           {
-          "caterer": "Olive & Basil",
+          "cuisine": "Olive & Basil",
   "event_date": "Monday, March 17",
   "event_date_iso": "2025-03-17",
   "menu_items":  [
@@ -272,10 +274,10 @@ const MenuRenderer = () => {
           }
         ];
 
-        console.log('Checking menu validity for:', { dateSlug, catererSlug });
+        console.log('Checking menu validity for:', { dateSlug, cuisineSlug });
         
         // Check if the requested menu exists
-        if (!isValidMenu(dateSlug, catererSlug, availableMenus)) {
+        if (!isValidMenu(dateSlug, cuisineSlug, availableMenus)) {
           console.log('Menu not found, redirecting to 404');
           notFound();
           return;
@@ -283,7 +285,7 @@ const MenuRenderer = () => {
 
         // Find the matching menu
         const menu = availableMenus.find(m => 
-          m.event_date_iso === dateSlug && toSlug(m.caterer) === catererSlug
+          m.event_date_iso === dateSlug && toSlug(m.cuisine) === cuisineSlug
         );
 
         console.log('Found menu:', menu);
@@ -297,7 +299,7 @@ const MenuRenderer = () => {
     };
 
     fetchMenuData();
-  }, [dateSlug, catererSlug]);
+  }, [dateSlug, cuisineSlug]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -338,7 +340,7 @@ const MenuRenderer = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">{menuData.caterer}</h1>
+          <h1 className="text-4xl font-bold mb-2">{menuData.cuisine}</h1>
           <div className="flex items-center justify-center text-gray-600">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

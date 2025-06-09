@@ -17,15 +17,15 @@ export const toSlug = (str: string): string => {
   return slug;
 };
 
-export const isValidMenu = (dateSlug: string, catererSlug: string, availableMenus: Menu[]): boolean => {
+export const isValidMenu = (dateSlug: string, cuisineSlug: string, availableMenus: Menu[]): boolean => {
   return availableMenus.some(menu => {
-    const menuSlug = toSlug(menu.caterer);
-    return menu.event_date_iso === dateSlug && menuSlug === catererSlug;
+    const menuSlug = toSlug(menu.cuisine);
+    return menu.event_date_iso === dateSlug && menuSlug === cuisineSlug;
   });
 };
 
 export type Menu = {
-  caterer: string;
+  cuisine: string;
   event_date: string;
   event_date_iso: string;
   menu_items: Array<{

@@ -1,8 +1,9 @@
 'use client';
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { datadogRum } from '@datadog/browser-rum';
 import { reactPlugin } from '@datadog/browser-rum-react';
+// import Navbar from "../components/Navbar";
+// import Footer from "../components/Footer";
 
 
 datadogRum.init({
@@ -24,18 +25,18 @@ datadogRum.init({
 
 // If you have a fixed set of menus, you can define them here
 interface Menu {
-  catererSlug: string;
+  cuisineSlug: string;
   dateSlug: string;
-  catererName: string; // For display purposes
+  cuisineName: string; // For display purposes
   eventDate: string;   // For display purposes
 }
 
 // In the future, we'll fetch the data from the API
 const availableMenus: Menu[] = [
   {
-    catererSlug: 'olive-and-basil',
+    cuisineSlug: 'olive-and-basil',
     dateSlug: '2025-03-17',
-    catererName: 'Olive & Basil',
+    cuisineName: 'Olive & Basil',
     eventDate: 'Monday, March 17'
   },
 ];
@@ -72,29 +73,33 @@ export default function Home() {
     return <div>Loading available menus...</div>;
   }
 
+  // Get today's date for display
+  const today = new Date().toLocaleDateString(undefined, {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-center">Available Menus</h1>
-        
-        <div className="grid gap-6 md:grid-cols-2">
-          {menus.map((menu, index) => (
-            <Link 
-              key={index}
-              href={`/${menu.dateSlug}/${menu.catererSlug}`} 
-              className="block p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            >
-              <h2 className="text-2xl font-bold mb-2">{menu.catererName}</h2>
-              <div className="flex items-center text-gray-600">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>{menu.eventDate}</span>
-              </div>
-            </Link>
-          ))}
+    <div className="min-h-screen flex flex-col bg-gray-50">
+
+      <main className="flex-1 flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-xl bg-white rounded-xl shadow-md p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            {/* <button className="text-lg px-2 py-1" aria-label="Previous event">⟵</button> */}
+            <div className="text-center w-full">
+              <div className="font-semibold text-gray-700">{today}</div>
+              <div className="text-lg font-bold mt-1">Upcoming event - {menus[0]?.cuisineName || 'Cuisine'}</div>
+            </div>
+            {/* <button className="text-lg px-2 py-1" aria-label="Next event">⟶</button> */}
+          </div>
+          <ul className="list-disc pl-6 cursor-pointer">
+            <li onClick={() => alert('Show menu details')}>${menus[4]?.cuisineName}</li>
+            <li onClick={() => alert('Show menu details')}>${menus[1]?.cuisineName}</li>
+            <li onClick={() => alert('Show menu details')}>${menus[2]?.cuisineName}</li>
+            <li onClick={() => alert('Show menu details')}>${menus[3]?.cuisineName}</li>
+            <li>ETC</li>
+          </ul>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
