@@ -1,31 +1,56 @@
 export const toSlug = (str: string): string => {
-  // First, trim whitespace and convert to lowercase
-  let slug = str.trim().toLowerCase();
+  // Input validation and sanitization
+  if (typeof str !== 'string' || str.length === 0) {
+    throw new Error('Invalid input for slug conversion');
+  }
   
-  // Replace '&' with 'and'
-  slug = slug.replace(/&/g, 'and');
+  // Limit input length to prevent DoS
+  if (str.length > 200) {
+    throw new Error('Input too long for slug conversion');
+  }
   
-  // Replace multiple spaces with single dash
-  slug = slug.replace(/\s+/g, '-');
+  // First, sanitize by removing potentially dangerous characters
+  const sanitized = str
+    .trim()
+    .replace(/[<>"/\\]/g, '') // Remove dangerous characters
+    .toLowerCase();
   
-  // Remove any non-alphanumeric characters (except dashes)
-  slug = slug.replace(/[^a-z0-9-]/g, '');
+  // Convert to slug format
+  const slug = sanitized
+    .replace(/\s+/g, '-')           // Replace spaces with hyphens
+    .replace(/&/g, 'and')           // Replace & with 'and'
+    .replace(/[^a-z0-9-]/g, '')     // Remove non-alphanumeric characters except hyphens
+    .replace(/-+/g, '-')            // Replace multiple hyphens with single hyphen
+    .replace(/^-|-$/g, '');         // Remove leading/trailing hyphens
   
-  // Remove multiple consecutive dashes
-  slug = slug.replace(/-+/g, '-');
+  // Final validation
+  if (slug.length === 0 || slug.length > 100) {
+    throw new Error('Invalid slug generated');
+  }
   
   return slug;
 };
 
 export const isValidMenu = (dateSlug: string, cuisineSlug: string, availableMenus: Menu[]): boolean => {
-  return availableMenus.some(menu => {
-    const menuSlug = toSlug(menu.cuisine);
-    return menu.event_date_iso === dateSlug && menuSlug === cuisineSlug;
-  });
+  try {
+    return availableMenus.some(menu => {
+      try {
+        const menuSlug = toSlug(menu.caterer || menu.cuisine || '');
+        return menu.event_date_iso === dateSlug && menuSlug === cuisineSlug;
+      } catch (error) {
+        console.error('Error processing menu:', menu, error);
+        return false;
+      }
+    });
+  } catch (error) {
+    console.error('Error validating menu:', error);
+    return false;
+  }
 };
 
 export type Menu = {
-  cuisine: string;
+  caterer?: string;
+  cuisine?: string;
   event_date: string;
   event_date_iso: string;
   menu_items: Array<{

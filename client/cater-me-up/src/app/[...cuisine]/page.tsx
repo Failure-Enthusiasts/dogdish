@@ -126,30 +126,127 @@ const sampleMenuData: Menu = {
 //   }>;
 // };
 
-// Helper function to convert a string to slug format
+// Helper function to convert a string to slug format with proper sanitization
 const toSlug = (str: string) => {
   console.log('Converting slug:', str);
-  // First, deal with the spaces and special characters then deal with regular characters.
-  const slug = str.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and').replace(/[^a-z0-9-]/g, '');
+  
+  // Input validation and sanitization
+  if (typeof str !== 'string' || str.length === 0) {
+    throw new Error('Invalid input for slug conversion');
+  }
+  
+  // Limit input length to prevent DoS
+  if (str.length > 200) {
+    throw new Error('Input too long for slug conversion');
+  }
+  
+  // First, sanitize by removing potentially dangerous characters
+  const sanitized = str
+    .trim()
+    .replace(/[<>"/\\]/g, '') // Remove dangerous characters
+    .toLowerCase();
+  
+  // Convert to slug format
+  const slug = sanitized
+    .replace(/\s+/g, '-')           // Replace spaces with hyphens
+    .replace(/&/g, 'and')           // Replace & with 'and'
+    .replace(/[^a-z0-9-]/g, '')     // Remove non-alphanumeric characters except hyphens
+    .replace(/-+/g, '-')            // Replace multiple hyphens with single hyphen
+    .replace(/^-|-$/g, '');         // Remove leading/trailing hyphens
+  
   console.log('Resulting slug:', slug);
+  
+  // Final validation
+  if (slug.length === 0 || slug.length > 100) {
+    throw new Error('Invalid slug generated');
+  }
+  
   return slug;
 };
+
+// Helper function to validate URL parameters
+const validateUrlParams = (params: string[]): { dateSlug: string; cuisineSlug: string } => {
+  // Validate params array
+  if (!Array.isArray(params) || params.length !== 2) {
+    throw new Error('Invalid URL parameters');
+  }
+  
+  const [dateSlug, cuisineSlug] = params;
+  
+  // Validate date slug format (YYYY-MM-DD)
+  if (typeof dateSlug !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateSlug)) {
+    throw new Error('Invalid date format');
+  }
+  
+  // Validate that date is actually a valid date
+  const parsedDate = new Date(dateSlug);
+  if (isNaN(parsedDate.getTime())) {
+    throw new Error('Invalid date value');
+  }
+  
+  // Don't allow dates too far in the past or future
+  const now = new Date();
+  const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  const oneYearFromNow = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+  
+  if (parsedDate < oneYearAgo || parsedDate > oneYearFromNow) {
+    throw new Error('Date out of valid range');
+  }
+  
+  // Validate cuisine slug format
+  if (typeof cuisineSlug !== 'string' || !/^[a-z0-9-]+$/.test(cuisineSlug)) {
+    throw new Error('Invalid cuisine slug format');
+  }
+  
+  // Limit slug length
+  if (cuisineSlug.length < 1 || cuisineSlug.length > 100) {
+    throw new Error('Cuisine slug length invalid');
+  }
+  
+  // Prevent certain suspicious patterns
+  const suspiciousPatterns = [
+    /\.\./, // Directory traversal
+    /[<>]/, // HTML/XML tags
+    /javascript:/i, // JavaScript protocol
+    /data:/i, // Data protocol
+    /vbscript:/i, // VBScript protocol
+  ];
+  
+  for (const pattern of suspiciousPatterns) {
+    if (pattern.test(dateSlug) || pattern.test(cuisineSlug)) {
+      throw new Error('Suspicious characters detected');
+    }
+  }
+  
+  return { dateSlug, cuisineSlug };
+};
+
 // Helper function to validate if a menu exists
 const isValidMenu = (dateSlug: string, cuisineSlug: string, availableMenus: Menu[]) => {
   console.log('Validating menu with:', { dateSlug, cuisineSlug });
   console.log('Available menus:', availableMenus);
   
-  const isValid = availableMenus.some(menu => {
-    const menuSlug = toSlug(menu.cuisine);
-    console.log('Comparing:', {
-      dates: { provided: dateSlug, available: menu.event_date_iso },
-      slugs: { provided: cuisineSlug, converted: menuSlug }
+  try {
+    const isValid = availableMenus.some(menu => {
+      try {
+        const menuSlug = toSlug(menu.cuisine);
+        console.log('Comparing:', {
+          dates: { provided: dateSlug, available: menu.event_date_iso },
+          slugs: { provided: cuisineSlug, converted: menuSlug }
+        });
+        return menu.event_date_iso === dateSlug && menuSlug === cuisineSlug;
+      } catch (error) {
+        console.error('Error processing menu:', menu, error);
+        return false;
+      }
     });
-    return menu.event_date_iso === dateSlug && menuSlug === cuisineSlug;
-  });
-  
-  console.log('Menu is valid:', isValid);
-  return isValid;
+    
+    console.log('Menu is valid:', isValid);
+    return isValid;
+  } catch (error) {
+    console.error('Error validating menu:', error);
+    return false;
+  }
 };
 
 const MenuRenderer = () => {
@@ -158,13 +255,22 @@ const MenuRenderer = () => {
   const [activeAllergenFilter, setActiveAllergenFilter] = useState('All Allergens');
   const [menuData, setMenuData] = useState<Menu | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Extract date and cuisine from the slug 
-  const [dateSlug, cuisineSlug] = params.cuisine as string[];
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMenuData = async () => {
       try {
+        // Extract and validate URL parameters with comprehensive security checks
+        const cuisine = params.cuisine as string[];
+        
+        if (!cuisine || !Array.isArray(cuisine)) {
+          throw new Error('Invalid URL structure');
+        }
+        
+        const { dateSlug, cuisineSlug } = validateUrlParams(cuisine);
+        
+        console.log('Validated URL parameters:', { dateSlug, cuisineSlug });
+
         // In a real app, you'd fetch this from an API
         // For now, we'll use the static data
         const availableMenus = [
@@ -292,6 +398,15 @@ const MenuRenderer = () => {
         setMenuData(menu || null);
       } catch (error) {
         console.error('Error fetching menu:', error);
+        
+        // Handle validation errors gracefully
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError('An unexpected error occurred');
+        }
+        
+        // For security/validation errors, redirect to 404
         notFound();
       } finally {
         setLoading(false);
@@ -299,7 +414,7 @@ const MenuRenderer = () => {
     };
 
     fetchMenuData();
-  }, [dateSlug, cuisineSlug]);
+  }, [params.cuisine]);
 
   if (loading) {
     return <div>Loading...</div>;

@@ -15,32 +15,100 @@ export default function AdminLogin() {
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     
-    if (!username || !password) {
-      setError('Please enter both username and password');
-      return;
-    }
-    
     setIsLoading(true);
     setError('');
     
     try {
+      // Client-side validation
+      const trimmedUsername = username.trim();
+      const trimmedPassword = password.trim();
+      
+      // Basic validation
+      if (!trimmedUsername || !trimmedPassword) {
+        setError('Please enter both username and password');
+        return;
+      }
+      
+      // Username validation
+      if (trimmedUsername.length < 1 || trimmedUsername.length > 50) {
+        setError('Username must be between 1 and 50 characters');
+        return;
+      }
+      
+      if (!/^[a-zA-Z0-9_-]+$/.test(trimmedUsername)) {
+        setError('Username can only contain letters, numbers, hyphens, and underscores');
+        return;
+      }
+      
+      // Password validation
+      if (trimmedPassword.length < 8) {
+        setError('Password must be at least 8 characters long');
+        return;
+      }
+      
+      if (trimmedPassword.length > 128) {
+        setError('Password is too long');
+        return;
+      }
+      
+      if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(trimmedPassword)) {
+        setError('Password must contain at least one lowercase letter, one uppercase letter, and one number');
+        return;
+      }
+      
+      // Sanitize inputs (escape HTML entities)
+      const sanitizedUsername = trimmedUsername
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+      
+      // Rate limiting check (simple client-side protection)
+      const lastAttemptTime = localStorage.getItem('lastLoginAttempt');
+      const attemptCount = parseInt(localStorage.getItem('loginAttempts') || '0');
+      const now = Date.now();
+      
+      if (lastAttemptTime && attemptCount >= 5) {
+        const timeDiff = now - parseInt(lastAttemptTime);
+        if (timeDiff < 15 * 60 * 1000) { // 15 minutes cooldown
+          const remainingTime = Math.ceil((15 * 60 * 1000 - timeDiff) / 60000);
+          setError(`Too many failed attempts. Please try again in ${remainingTime} minutes.`);
+          return;
+        } else {
+          // Reset attempts after cooldown
+          localStorage.removeItem('loginAttempts');
+          localStorage.removeItem('lastLoginAttempt');
+        }
+      }
+      
       // In a real application, you would validate credentials against your backend
       // For demo purposes, we'll use a hardcoded check
-      if (username === 'admin' && password === 'password') {
+      if (sanitizedUsername === 'admin' && trimmedPassword === 'Password123') {
+        // Reset failed attempts on successful login
+        localStorage.removeItem('loginAttempts');
+        localStorage.removeItem('lastLoginAttempt');
+        
         // Set a cookie or token to maintain the session
         // For example:
         // document.cookie = 'isAuthenticated=true; path=/; max-age=3600';
         
         // Store in localStorage (not secure for production, just for demo)
         localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('loginTime', now.toString());
         
         // Redirect to the admin dashboard
-        router.push('/admin/dashboard');
+        router.push('/admin');
       } else {
+        // Track failed attempts
+        const newAttemptCount = attemptCount + 1;
+        localStorage.setItem('loginAttempts', newAttemptCount.toString());
+        localStorage.setItem('lastLoginAttempt', now.toString());
+        
         setError('Invalid username or password');
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
+      console.error('Login error:', err);
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
