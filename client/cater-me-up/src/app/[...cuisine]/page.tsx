@@ -2,6 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { type Menu } from '@/utils/menuHelpers';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ErrorDisplay from '@/components/ErrorDisplay';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 
 // Sample menu data from the JSON
@@ -152,157 +156,144 @@ const isValidMenu = (dateSlug: string, cuisineSlug: string, availableMenus: Menu
   return isValid;
 };
 
-const MenuRenderer = () => {
+const MenuRendererContent = () => {
   const params = useParams();
   const [activeFilter, setActiveFilter] = useState('No Preferences');
   const [activeAllergenFilter, setActiveAllergenFilter] = useState('All Allergens');
   const [menuData, setMenuData] = useState<Menu | null>(null);
   const [loading, setLoading] = useState(true);
+  const { error, isError, clearError, handleError } = useErrorHandler();
 
   // Extract date and cuisine from the slug 
   const [dateSlug, cuisineSlug] = params.cuisine as string[];
 
-  useEffect(() => {
-    const fetchMenuData = async () => {
-      try {
-        // In a real app, you'd fetch this from an API
-        // For now, we'll use the static data
-        const availableMenus = [
-          {
+  const loadMenuData = () => {
+    try {
+      console.log('Loading menu data for:', { dateSlug, cuisineSlug });
+      setLoading(true);
+      
+      // In a real app, you'd fetch this from an API
+      // For now, we'll use the static data with proper error handling
+      const availableMenus = [
+        {
           "cuisine": "Olive & Basil",
-  "event_date": "Monday, March 17",
-  "event_date_iso": "2025-03-17",
-  "menu_items":  [
-      {
-        "title": "Balsamic Chicken",
-        "description": "Grilled chicken breast with blistered cherry tomatoes, confit garlic, balsamic glaze",
-        "preferences": [],
-        "allergens": [
-          "Garlic",
-          "Nightshades"
-        ]
-      },
-      {
-        "title": "Mediterranean Salmon",
-        "description": "Salmon with olives, tomatoes, capers, garlic, scallions, red wine vinaigrette",
-        "preferences": [
-          "PESCATARIAN"
-        ],
-        "allergens": [
-          "Garlic",
-          "Nightshades",
-          "Onions",
-          "Seafood"
-        ]
-      },
-      {
-        "title": "Vegan Agri Dolce Eggplant and Mixed Vegetables",
-        "description": "Braised eggplant, seasonal vegetables with sugar, red wine vinegar, basil and garlic",
-        "preferences": [
-          "VEGAN",
-          "VEGETARIAN"
-        ],
-        "allergens": [
-          "Garlic",
-          "Nightshades",
-          "Onions"
-        ]
-      },
-      {
-        "title": "Garden Salad",
-        "description": "Mixed green salad with cucumbers, tomatoes, carrots and peppers with side of dressing.",
-        "preferences": [
-          "VEGAN",
-          "LIGHT CARB"
-        ],
-        "allergens": [
-          "Nightshades"
-        ]
-      },
-      {
-        "title": "Garlic Bread",
-        "description": "Garlic bread",
-        "preferences": [],
-        "allergens": [
-          "Dairy",
-          "Garlic",
-          "Wheat"
-        ]
-      },
-      {
-        "title": "Gluten Free Spaghetti Aglio Olio - Vegan/No Cheese",
-        "description": "Gluten Free Spaghetti with olive oil - No Cheese",
-        "preferences": [
-          "VEGAN"
-        ],
-        "allergens": [
-          "Garlic"
-        ]
-      },
-      {
-        "title": "Italian Roasted Vegetables",
-        "description": "Roasted zucchini, eggplant, peppers with herbs.",
-        "preferences": [
-          "VEGAN",
-          "LIGHT CARB"
-        ],
-        "allergens": [
-          "Garlic",
-          "Nightshades"
-        ]
-      },
-      {
-        "title": "Linguini Aglio Olio - Vegan/No Cheese",
-        "description": "Linguini with olive oil - No Cheese",
-        "preferences": [
-          "VEGAN"
-        ],
-        "allergens": [
-          "Garlic",
-          "Wheat"
-        ]
-      },
-      {
-        "title": "Green Goddess Dressing",
-        "description": "Served with garden salad.",
-        "preferences": [
-          "VEGAN"
-        ],
-        "allergens": []
-      }
-    ]
-          }
-        ];
-
-        console.log('Checking menu validity for:', { dateSlug, cuisineSlug });
-        
-        // Check if the requested menu exists
-        if (!isValidMenu(dateSlug, cuisineSlug, availableMenus)) {
-          console.log('Menu not found, redirecting to 404');
-          notFound();
-          return;
+          "event_date": "Monday, March 17",
+          "event_date_iso": "2025-03-17",
+          "menu_items": [
+            {
+              "title": "Balsamic Chicken",
+              "description": "Grilled chicken breast with blistered cherry tomatoes, confit garlic, balsamic glaze",
+              "preferences": [],
+              "allergens": ["Garlic", "Nightshades"]
+            },
+            {
+              "title": "Mediterranean Salmon",
+              "description": "Salmon with olives, tomatoes, capers, garlic, scallions, red wine vinaigrette",
+              "preferences": ["PESCATARIAN"],
+              "allergens": ["Garlic", "Nightshades", "Onions", "Seafood"]
+            },
+            {
+              "title": "Vegan Agri Dolce Eggplant and Mixed Vegetables",
+              "description": "Braised eggplant, seasonal vegetables with sugar, red wine vinegar, basil and garlic",
+              "preferences": ["VEGAN", "VEGETARIAN"],
+              "allergens": ["Garlic", "Nightshades", "Onions"]
+            },
+            {
+              "title": "Garden Salad",
+              "description": "Mixed green salad with cucumbers, tomatoes, carrots and peppers with side of dressing.",
+              "preferences": ["VEGAN", "LIGHT CARB"],
+              "allergens": ["Nightshades"]
+            },
+            {
+              "title": "Garlic Bread",
+              "description": "Garlic bread",
+              "preferences": [],
+              "allergens": ["Dairy", "Garlic", "Wheat"]
+            },
+            {
+              "title": "Gluten Free Spaghetti Aglio Olio - Vegan/No Cheese",
+              "description": "Gluten Free Spaghetti with olive oil - No Cheese",
+              "preferences": ["VEGAN"],
+              "allergens": ["Garlic"]
+            },
+            {
+              "title": "Italian Roasted Vegetables",
+              "description": "Roasted zucchini, eggplant, peppers with herbs.",
+              "preferences": ["VEGAN", "LIGHT CARB"],
+              "allergens": ["Garlic", "Nightshades"]
+            },
+            {
+              "title": "Linguini Aglio Olio - Vegan/No Cheese",
+              "description": "Linguini with olive oil - No Cheese",
+              "preferences": ["VEGAN"],
+              "allergens": ["Garlic", "Wheat"]
+            },
+            {
+              "title": "Green Goddess Dressing",
+              "description": "Served with garden salad.",
+              "preferences": ["VEGAN"],
+              "allergens": []
+            }
+          ]
         }
+      ];
 
-        // Find the matching menu
-        const menu = availableMenus.find(m => 
-          m.event_date_iso === dateSlug && toSlug(m.cuisine) === cuisineSlug
-        );
-
-        console.log('Found menu:', menu);
-        setMenuData(menu || null);
-      } catch (error) {
-        console.error('Error fetching menu:', error);
-        notFound();
-      } finally {
-        setLoading(false);
+      // Validate parameters
+      if (!dateSlug || !cuisineSlug) {
+        handleError('Invalid menu parameters. Date and cuisine are required.');
+        return;
       }
-    };
 
-    fetchMenuData();
+      // Check if the requested menu exists
+      if (!isValidMenu(dateSlug, cuisineSlug, availableMenus)) {
+        console.log('Menu not found, redirecting to 404');
+        notFound();
+        return;
+      }
+
+      // Find the matching menu
+      const menu = availableMenus.find(m => 
+        m.event_date_iso === dateSlug && toSlug(m.cuisine) === cuisineSlug
+      );
+
+      if (!menu) {
+        console.log('Menu data not found after validation');
+        notFound();
+        return;
+      }
+
+      console.log('Successfully loaded menu:', menu.cuisine);
+      setMenuData(menu);
+      setLoading(false);
+      
+    } catch (error) {
+      console.error('Error loading menu data:', error);
+      handleError(error, 'Loading menu data');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMenuData();
   }, [dateSlug, cuisineSlug]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner fullScreen message="Loading menu..." />;
+  }
+
+  if (isError && error) {
+    return (
+      <ErrorDisplay
+        error={error}
+        variant="fullscreen"
+        onRetry={() => {
+          clearError();
+          loadMenuData();
+        }}
+        onDismiss={() => window.location.href = '/'}
+        showDetails={process.env.NODE_ENV === 'development'}
+      />
+    );
   }
 
   if (!menuData) {
@@ -424,6 +415,20 @@ const MenuRenderer = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Wrap with error boundary for comprehensive error handling
+const MenuRenderer = () => {
+  return (
+    <ErrorBoundary
+      onError={(error) => {
+        console.error('Menu page error:', error);
+        // Could send to error reporting service here
+      }}
+    >
+      <MenuRendererContent />
+    </ErrorBoundary>
   );
 };
 

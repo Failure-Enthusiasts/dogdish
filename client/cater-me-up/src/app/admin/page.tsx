@@ -1,8 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-// import { headers } from 'next/headers';
 import Link from 'next/link';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { handleApiResponse, retryAsync } from '@/utils/errorUtils';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ErrorDisplay from '@/components/ErrorDisplay';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface MenuData {
   // Define menu data interface properties here
@@ -13,11 +17,26 @@ interface MenuData {
   category: string;
 }
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
   const [menuData, setMenuData] = useState<MenuData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { error, isError, clearError, handleAsyncError } = useErrorHandler();
 
+  const fetchMenuData = async () => {
+    const response = await fetch('/data/menu.json');
+    const data = await handleApiResponse<MenuData>(response);
+    return data;
+  };
+
+  const loadMenuData = () => {
+    handleAsyncError(async () => {
+      setIsLoading(true);
+      const data = await retryAsync(fetchMenuData, 2, 1000);
+      setMenuData(data);
+      setIsLoading(false);
+    }, 'Loading menu data');
+  };
 
   useEffect(() => {
     // Check if the user is authenticated (client-side protection)
@@ -28,20 +47,7 @@ export default function AdminDashboard() {
       return;
     }
     
-    // Fetch the menu data
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/data/menu.json');
-        const data = await response.json();
-        setMenuData(data);
-      } catch (error) {
-        console.error('Error fetching menu data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchData();
+    loadMenuData();
   }, [router]);
 
   const handleLogout = () => {
@@ -52,7 +58,22 @@ export default function AdminDashboard() {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return <LoadingSpinner fullScreen message="Loading admin dashboard..." />;
+  }
+
+  if (isError && error) {
+    return (
+      <ErrorDisplay
+        error={error}
+        variant="fullscreen"
+        onRetry={() => {
+          clearError();
+          loadMenuData();
+        }}
+        onDismiss={() => router.push('/')}
+        showDetails={process.env.NODE_ENV === 'development'}
+      />
+    );
   }
 
   return (
@@ -163,5 +184,19 @@ export default function AdminDashboard() {
         </main>
       </div>
     </>
+  );
+}
+
+// Export the main component wrapped with error boundary
+export default function AdminDashboard() {
+  return (
+    <ErrorBoundary
+      onError={(error) => {
+        console.error('Admin dashboard error:', error);
+        // Could send to error reporting service here
+      }}
+    >
+      <AdminDashboardContent />
+    </ErrorBoundary>
   );
 }
