@@ -256,12 +256,7 @@ function HomeContent() {
 // Export the main component wrapped with error boundary
 export default function Home() {
   return (
-    <ErrorBoundary
-      onError={(error) => {
-        console.error('Home page error:', error);
-        // Could send to error reporting service here
-      }}
-    >
+    <ErrorBoundary>
       <HomeContent />
     </ErrorBoundary>
   );

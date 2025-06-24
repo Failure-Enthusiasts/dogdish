@@ -5,7 +5,7 @@ import { logError } from '@/utils/errorUtils';
 
 interface UseErrorHandlerOptions {
   onError?: (error: ApiError) => void;
-  showToast?: boolean;
+  isShowToast?: boolean;
 }
 
 interface UseErrorHandlerReturn {
@@ -55,8 +55,14 @@ export function useErrorHandler(
         };
       }
 
-      // Log the error
-      logError(error as Error, context);
+      // Log the error - convert to Error object if it's not already
+      if (error instanceof Error) {
+        logError(error, context);
+      } else {
+        // Create an Error object from the string or other type
+        const errorObj = new Error(apiError.message);
+        logError(errorObj, context);
+      }
 
       // Set the error state
       setError(apiError);

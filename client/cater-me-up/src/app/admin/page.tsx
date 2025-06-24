@@ -9,12 +9,13 @@ import ErrorDisplay from '@/components/ErrorDisplay';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface MenuData {
-  // Define menu data interface properties here
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
+  event_date: string;
+  menu_items: Array<{
+    title: string;
+    description: string;
+    preferences: string[];
+    allergens: string[];
+  }>;
 }
 
 function AdminDashboardContent() {
@@ -190,12 +191,7 @@ function AdminDashboardContent() {
 // Export the main component wrapped with error boundary
 export default function AdminDashboard() {
   return (
-    <ErrorBoundary
-      onError={(error) => {
-        console.error('Admin dashboard error:', error);
-        // Could send to error reporting service here
-      }}
-    >
+    <ErrorBoundary>
       <AdminDashboardContent />
     </ErrorBoundary>
   );

@@ -64,8 +64,8 @@ export function logError(error: Error | ApiError, context?: string): void {
   const logData = {
     timestamp,
     context,
-    message: error.message,
-    stack: 'stack' in error ? error.stack : undefined,
+    message: error.message || 'Unknown error',
+    stack: (error instanceof Error) ? error.stack : undefined,
     ...('status' in error ? { status: error.status, code: error.code } : {})
   };
 

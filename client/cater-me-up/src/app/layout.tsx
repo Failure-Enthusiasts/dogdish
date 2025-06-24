@@ -30,13 +30,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ErrorBoundary
-          onError={(error) => {
-            console.error('Global application error:', error);
-            // Here you could send to an error reporting service
-            // Example: Sentry, DataDog, etc.
-          }}
-        >
+        <ErrorBoundary>
           <Navbar />
           {children}
           <Footer />

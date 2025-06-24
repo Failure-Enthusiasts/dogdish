@@ -35,7 +35,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const componentError: ComponentError = {
       message: error.message,
-      componentName: errorInfo.componentStack.split('\n')[1]?.trim() || 'Unknown',
+      componentName: errorInfo.componentStack?.split('\n')[1]?.trim() || 'Unknown',
       stack: error.stack,
       timestamp: new Date().toISOString()
     };
