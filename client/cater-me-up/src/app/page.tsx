@@ -42,6 +42,7 @@ const availableMenus: Menu[] = [
       [ { "weekday": "monday",
          "iso_date": "2025-05-12", 
          "cuisine": "moroccan", 
+         
          "entrees_and_sides": 
           [ 
             { "name": "Shabazi Spiced Chicken Souvlaki served with tzatziki sauce", "allergens": [ "dairy" ], "preferences": [] }, 
