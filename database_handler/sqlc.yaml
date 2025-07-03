@@ -1,0 +1,12 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "sqlc/query.sql"
+    schema: "sqlc/schema.sql"
+    database:
+      uri: "postgres://postgres:123password@localhost:5432/dogdish"
+    gen:
+      go:
+        package: "db"
+        out: "db"
+        sql_package: "database/sql"
