@@ -1,9 +1,0 @@
--- +goose Up
--- +goose ENVSUB ON
-CREATE USER $DATABASE_USER WITH PASSWORD '$DATABASE_PASSWORD';
--- +goose ENVSUB OFF
-
--- +goose Down
--- +goose ENVSUB ON
-DROP USER IF EXISTS $DATABASE_USER;
--- +goose ENVSUB OFF 

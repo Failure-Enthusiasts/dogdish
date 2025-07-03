@@ -24,13 +24,3 @@ Destroy the database with the docker command below:
 ``` bash
 docker compose -f storage/compose.yaml down
 ```
-
-### Spin up
-
-#### Database handler
-```
-cd database_handler
-flask --app database_handler run
-```
-
-<test for Signed Commits!>
