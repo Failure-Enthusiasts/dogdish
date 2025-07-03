@@ -29,7 +29,7 @@
 	"forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "uname -a",
+	"postCreateCommand": "bash .devcontainer/setup.sh",
 
 	// Configure tool-specific properties.
 	// "customizations": {},
@@ -39,7 +39,8 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"hediet.vscode-drawio"
+				"hediet.vscode-drawio",
+				"golang.go"
 			]
 		}
 	}
