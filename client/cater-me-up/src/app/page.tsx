@@ -3,10 +3,11 @@ import { useState, useEffect } from 'react';
 import { datadogRum } from '@datadog/browser-rum';
 import { reactPlugin } from '@datadog/browser-rum-react';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { handleApiResponse, retryAsync } from '@/utils/errorUtils';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorDisplay from '@/components/ErrorDisplay';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import menuJson from './utils/menuData.json';
+import { toSlug } from '@/utils/menuHelpers';
 // import Navbar from "../components/Navbar";
 // import Footer from "../components/Footer";
 
@@ -15,7 +16,7 @@ datadogRum.init({
     applicationId: '1819a01a-b7b4-471f-bdca-1e35d3f2bd43',
     clientToken: 'pub96ac2515546ca98f9fab346453907a4a',
     site: 'datadoghq.com',
-    service:'cater_me_up',
+    service:'dogdish',
     env: 'dev',
     version: '0.0.1',
     sessionSampleRate:  100,
@@ -28,163 +29,61 @@ datadogRum.init({
 });
 
 
-// If you have a fixed set of menus, you can define them here
-interface Menu {
-  cuisineSlug: string;
-  dateSlug: string;
-  cuisineName: string; // For display purposes
-  eventDate: string;   // For display purposes
+// Add a date formatting function like in prev-events
+function formatEventDate(iso: string) {
+  const [year, month, day] = iso.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+  return d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-// In the future, we'll fetch the data from the API
-const availableMenus: Menu[] = [
-    { "events": 
-      [ { "weekday": "monday",
-         "iso_date": "2025-05-12", 
-         "cuisine": "moroccan", 
-         
-         "entrees_and_sides": 
-          [ 
-            { "name": "Shabazi Spiced Chicken Souvlaki served with tzatziki sauce", "allergens": [ "dairy" ], "preferences": [] }, 
-            { "name": "Moroccan Harissa & Preserved Lemon Lamb Stew served with Harissa Yogurt", "allergens": [ "dairy" ], "preferences": [] }, 
-            { "name": "Toasted Farroto, Asparagus, Tomato, Cucumber, Feta Cheese", "allergens": [ "gluten", "dairy" ], "preferences": [ "vegetarian" ] }, 
-            { "name": "Ras al Hanout Sauteed Spring Green Beans", "allergens": [], "preferences": [ "vegan" ] }, 
-            { "name": "Kale Wild Rice with Lemon Agave Dressing", "allergens": [], "preferences": [ "vegan" ] }, 
-            { "name": "Mezze Salad with Seared Halloumi, Eggplant, Zucchini, Mint Yogurt Dressing", "allergens": [ "dairy" ], "preferences": [ "vegetarian" ] } ], 
-        "salad_bar": { 
-          "toppings": 
-            [ 
-              { "name": "Baby Kale", "allergens": [], "preferences": [] }, 
-              { "name": "Za'atar Spiced Chickpeas", "allergens": [], "preferences": [] }, 
-              { "name": "Cherry Tomatoes", "allergens": [], "preferences": [] }, 
-              { "name": "Sliced Hot House Cucumbers", "allergens": [], "preferences": [] }, 
-              { "name": "Shaved Cello Carrot Coins", "allergens": [], "preferences": [] }, 
-              { "name": "Turmeric Cauliflower", "allergens": [], "preferences": [] }, 
-              { "name": "Tabbouleh", "allergens": [], "preferences": [] }, 
-              { "name": "Goat Cheese", "allergens": [ "dairy" ], "preferences": [] } ], 
-              
-          "dressings": 
-            [ 
-              { "name": "Caesar Dressing", "allergens": [ "egg", "dairy", "soy" ], "preferences": [] }, 
-              { "name": "Lemon-Dijon Vinaigrette", "allergens": [], "preferences": [] }, 
-              { "name": "Apple Cider Vinaigrette", "allergens": [], "preferences": [] }, 
-              { "name": "Italian Dressing", "allergens": [], "preferences": [] } 
-            ] 
-          } 
-        }, 
-              
-          { "weekday": "wednesday", 
-            "iso_date": "2025-05-14", 
-            "cuisine": "korean", 
-            "entrees_and_sides": [ 
-              { 
-                "name": "Gochujang Roasted Salmon Fillet", 
-                "allergens": [ "fish", "soy", "gluten", "sesame" ], "preferences": [] 
-              }, 
-              { 
-                "name": "Beef Bulgogi", "allergens": [ "soy", "sesame" ], "preferences": [] 
-              }, 
-              { 
-                "name": "Vegan Kimchi & Tofu Fried Rice", "allergens": [ "soy", "gluten", "sesame" ], "preferences": [ "vegan" ] 
-              }, 
-              {
-                 "name": "Chili Garlic Baby Bok Choy", "allergens": [ "soy", "sesame" ], "preferences": [ "vegan" ] 
-              }, 
-              { 
-                "name": "Japchae", "allergens": [ "soy", "sesame", "gluten" ], "preferences": [ "vegan" ] 
+function getAllEventsSorted() {
+  // Get all events, sorted by date ascending
+  return [...(menuJson.events || [])].sort((a, b) => new Date(a.iso_date).getTime() - new Date(b.iso_date).getTime());
+}
 
-              }, 
-              { 
-                "name": "Napa Cabbage & Carrot Slaw, Ginger Vinaigrette", "allergens": [ "soy", "sesame" ], "preferences": [ "vegan" ] 
-              } 
-            ], 
-            "salad_bar": { 
-              "toppings": 
-                [ 
-                  { "name": "Boston Bibb", "allergens": [], "preferences": [] },
-                  { "name": "Edamame", "allergens": [], "preferences": [] }, 
-                  { "name": "Cherry Tomatoes", "allergens": [], "preferences": [] }, 
-                  { "name": "Sliced Hot House Cucumbers", "allergens": [], "preferences": [] }, 
-                  { "name": "Shaved Cello Carrot Coins", "allergens": [], "preferences": [] }, 
-                  { "name": "Pickled Cucumber", "allergens": [], "preferences": [] }, 
-                  { "name": "Red Pepper Banchan", "allergens": [], "preferences": [] }, 
-                  { "name": "Danmuji", "allergens": [], "preferences": [] }, 
-                  { "name": "Mozzarella", "allergens": [ "dairy" ], "preferences": [] } 
-                ], 
-              "dressings": 
-                [ 
-                  { "name": "Caesar Dressing", "allergens": [ "egg", "dairy", "soy" ], "preferences": [] }, 
-                  { "name": "Lemon-Dijon Vinaigrette", "allergens": [], "preferences": [] }, 
-                  { "name": "Apple Cider Vinaigrette", "allergens": [], "preferences": [] }, 
-                  { "name": "Italian Dressing", "allergens": [], "preferences": [] } 
-                ] 
-              } 
-            }, 
-                  
-            { "weekday": "friday", 
-              "iso_date": "2025-05-16", 
-              "cuisine": "french continental", 
-              "entrees_and_sides": 
-              [ 
-                { "name": "Herb Marinated Grilled Flank Steak", "allergens": [], "preferences": [] }, 
-                { "name": "Grilled Herb Chicken Paillard, Carrot & Napa Cabbage Slaw", "allergens": [], "preferences": [] }, 
-                { "name": "Provencal Zucchini, Summer Squash Ratatouille", "allergens": [], "preferences": [ "vegan" ] }, 
-                { "name": "Sauteed Haricot Verts with Lemon Olive Oil and Crispy Shallots", "allergens": [ "soy" ], "preferences": [ "vegan" ] }, 
-                { "name": "Pomme Puree", "allergens": [ "dairy" ], "preferences": [] }, 
-                { "name": "Nicoise Salad with Olives, Cucumbers, Haricot Verts, Hard Boiled Eggs, and Emulsified Lemon Vinaigrette", "allergens": [ "egg" ], "preferences": [ "vegetarian" ] } 
-              ], 
-              
-              "salad_bar": 
-                { 
-                  "toppings": 
-                  [ 
-                    { "name": "Baby Kale", "allergens": [], "preferences": [] }, 
-                    { "name": "Green Lentils", "allergens": [], "preferences": [] }, 
-                    { "name": "Cherry Tomatoes", "allergens": [], "preferences": [] }, 
-                    { "name": "Sliced Hot House Cucumbers", "allergens": [], "preferences": [] }, 
-                    { "name": "Shaved Cello Carrot Coins", "allergens": [], "preferences": [] }, 
-                    { "name": "Shaved Fennel", "allergens": [], "preferences": [] }, 
-                    { "name": "Castelvetrano Olives", "allergens": [], "preferences": [] }, 
-                    { "name": "Gruyere", "allergens": [], "preferences": [] } 
-                  ], 
-                  
-                  "dressings": 
-                  [ 
-                    { "name": "Caesar Dressing", "allergens": [ "egg", "dairy", "soy" ], "preferences": [] }, 
-                    { "name": "Lemon-Dijon Vinaigrette", "allergens": [], "preferences": [] }, 
-                    { "name": "Apple Cider Vinaigrette", "allergens": [], "preferences": [] }, 
-                    { "name": "Italian Dressing", "allergens": [], "preferences": [] } 
-                  ] 
-                } 
-              } 
-            ] 
-          },
-];
+function getEventIndices() {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const allEvents = getAllEventsSorted();
+  let prevIdx = -1, currIdx = -1, nextNextIdx = -1;
+  for (let i = 0; i < allEvents.length; i++) {
+    const eventDate = new Date(allEvents[i].iso_date);
+    eventDate.setHours(0,0,0,0);
+    if (eventDate < today) prevIdx = i;
+    if (currIdx === -1 && eventDate >= today) currIdx = i;
+  }
+  if (currIdx !== -1 && currIdx + 1 < allEvents.length) nextNextIdx = currIdx + 1;
+  return { prevIdx, currIdx, nextNextIdx, allEvents };
+}
 
 // Main component with comprehensive error handling
 function HomeContent() {
-  const [menus, setMenus] = useState<Menu[]>([]);
   const [loading, setLoading] = useState(true);
-  const { error, isError, clearError, handleAsyncError } = useErrorHandler();
+  const { error, isError, clearError } = useErrorHandler();
 
-  const fetchMenus = async () => {
-    const response = await fetch('/api/availableCuisine');
-    const data = await handleApiResponse<Menu[]>(response);
-    return data;
-  };
-
-  const loadMenus = () => {
-    handleAsyncError(async () => {
-      setLoading(true);
-      const data = await retryAsync(fetchMenus, 3, 1000);
-      setMenus(data || availableMenus);
-      setLoading(false);
-    }, 'Loading available menus');
-  };
-
+  // Use the transformed menus from JSON
   useEffect(() => {
-    loadMenus();
+    // No need to setMenus
+    setLoading(false);
   }, []);
+
+  // Get indices for previous, current, and next-next events
+  const { prevIdx, currIdx, nextNextIdx, allEvents } = getEventIndices();
+  const prevEvent = prevIdx !== -1 ? allEvents[prevIdx] : null;
+  const currEvent = currIdx !== -1 ? allEvents[currIdx] : null;
+  const nextNextEvent = nextNextIdx !== -1 ? allEvents[nextNextIdx] : null;
+
+  // Helper to get menu items preview
+  interface MenuItem { name: string; type?: string; preferences?: string[]; allergens?: string[]; }
+  interface EventData { entrees_and_sides?: MenuItem[]; salad_bar?: { toppings?: MenuItem[]; dressings?: MenuItem[] }; }
+  function getMenuPreview(event: EventData, max = 3): MenuItem[] {
+    if (!event) return [];
+    return [
+      ...(event.entrees_and_sides || []),
+      ...(event.salad_bar?.toppings || []),
+      ...(event.salad_bar?.dressings || [])
+    ].slice(0, max);
+  }
 
   if (loading) {
     return <LoadingSpinner fullScreen message="Loading available menus..." />;
@@ -197,58 +96,108 @@ function HomeContent() {
         variant="fullscreen"
         onRetry={() => {
           clearError();
-          loadMenus();
+          window.location.reload();
         }}
         onDismiss={() => {
           clearError();
-          setMenus(availableMenus); // Fallback to static data
-          setLoading(false);
+          window.location.href = '/';
         }}
         showDetails={process.env.NODE_ENV === 'development'}
       />
     );
   }
 
-  // Get today's date for display
-  const today = new Date().toLocaleDateString(undefined, {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  });
-
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <main className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="w-full max-w-xl bg-white rounded-xl shadow-md p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            {/* <button className="text-lg px-2 py-1" aria-label="Previous event">⟵</button> */}
-            <div className="text-center w-full">
-              <div className="font-semibold text-gray-700">{today}</div>
-              <div className="text-lg font-bold mt-1">
-                Upcoming event - {menus[0]?.cuisineName || 'Cuisine'}
+    <div className="bg-gray-50 min-h-screen p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2">{currEvent?.cuisine || 'Cuisine'}</h1>
+          {currEvent && (
+            <div className="flex flex-col items-center justify-center text-gray-600">
+              <div className="flex items-center mb-1">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>{formatEventDate(currEvent.iso_date)}</span>
               </div>
-            </div>
-            {/* <button className="text-lg px-2 py-1" aria-label="Next event">⟶</button> */}
-          </div>
-          
-          {menus.length > 0 ? (
-            <ul className="list-disc pl-6 cursor-pointer">
-              {menus.slice(0, 4).map((menu, index) => (
-                <li 
-                  key={menu.cuisineSlug} 
-                  onClick={() => window.location.href = `/${menu.dateSlug}/${menu.cuisineSlug}`}
-                  className="hover:text-blue-600 transition-colors"
-                >
-                  {menu.cuisineName}
-                </li>
-              ))}
-              {menus.length > 4 && <li>And more...</li>}
-            </ul>
-          ) : (
-            <div className="text-center text-gray-500 py-4">
-              No upcoming events available
             </div>
           )}
         </div>
-      </main>
+        {/* Main + Side Cards Layout */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Previous Event Card */}
+          {prevEvent && (
+            <div className="flex-1 bg-gray-100 border rounded-lg p-4 shadow-sm min-w-[220px] max-w-xs mx-auto lg:mx-0">
+              <div className="font-semibold text-gray-700 mb-1">Previous Event</div>
+              <div className="text-lg font-bold text-gray-800 mb-1">{prevEvent.cuisine}</div>
+              <div className="text-gray-500 text-sm mb-2">{formatEventDate(prevEvent.iso_date)}</div>
+              <ul className="text-xs text-gray-700 space-y-1 mb-2">
+                {getMenuPreview(prevEvent, 2).map(item => (
+                  <li key={item.name}>{item.name}</li>
+                ))}
+              </ul>
+              <button className="text-xs text-blue-700 hover:underline" onClick={() => window.location.href = `/${prevEvent.iso_date}/${toSlug(prevEvent.cuisine)}`}>View</button>
+            </div>
+          )}
+          {/* Main Event Card (more compact) */}
+          <div className="flex-[2] bg-white border rounded-lg p-4 shadow-md">
+            <div className="mb-4 font-semibold text-gray-800 text-lg">Next Event Menu</div>
+            {currEvent ? (() => {
+              const menuItems = getMenuPreview(currEvent, 6);
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {menuItems.map((item) => (
+                    <div key={item.name} className="border rounded-md p-3 bg-gray-50">
+                      <div className="font-medium text-gray-900 text-base mb-1 truncate">{item.name}</div>
+                      {item.type && <div className="text-xs text-gray-500 mb-1">{item.type}</div>}
+                      {item.preferences && item.preferences.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-1">
+                          {item.preferences.map((pref: string) => (
+                            <span key={pref} className="inline-block px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-800">{pref.charAt(0).toUpperCase() + pref.slice(1).toLowerCase()}</span>
+                          ))}
+                        </div>
+                      )}
+                      {item.allergens && item.allergens.length > 0 && (
+                        <div className="flex items-center text-xs text-gray-500">
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Contains: {item.allergens.join(', ')}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })() : <div className="text-gray-500">No upcoming events available</div>}
+            {currEvent && (
+              <div className="flex justify-center mt-4">
+                <button
+                  className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors text-sm font-semibold"
+                  onClick={() => window.location.href = `/${currEvent.iso_date}/${toSlug(currEvent.cuisine)}`}
+                >
+                  View Full Menu
+                </button>
+              </div>
+            )}
+          </div>
+          {/* Next-Next Event Card */}
+          {nextNextEvent && (
+            <div className="flex-1 bg-gray-100 border rounded-lg p-4 shadow-sm min-w-[220px] max-w-xs mx-auto lg:mx-0">
+              <div className="font-semibold text-gray-700 mb-1">Upcoming Event</div>
+              <div className="text-lg font-bold text-gray-800 mb-1">{nextNextEvent.cuisine}</div>
+              <div className="text-gray-500 text-sm mb-2">{formatEventDate(nextNextEvent.iso_date)}</div>
+              <ul className="text-xs text-gray-700 space-y-1 mb-2">
+                {getMenuPreview(nextNextEvent, 2).map(item => (
+                  <li key={item.name}>{item.name}</li>
+                ))}
+              </ul>
+              <button className="text-xs text-blue-700 hover:underline" onClick={() => window.location.href = `/${nextNextEvent.iso_date}/${toSlug(nextNextEvent.cuisine)}`}>View</button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

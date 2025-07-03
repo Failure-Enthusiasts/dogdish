@@ -24,20 +24,22 @@ describe('isValidMenu', () => {
       menu_items: []
     }
   ];
-
   test('validates correct menu combinations', () => {
-    expect(isValidMenu('2025-03-17', 'olive-and-basil', sampleMenus)).toBe(true);
+    const menusWithCuisine = sampleMenus.map(menu => ({ ...menu, cuisine: 'italian' }));
+    return expect(isValidMenu('2025-03-17', 'olive-and-basil', menusWithCuisine)).toBe(true);
   });
 
   test('rejects invalid date', () => {
-    expect(isValidMenu('2025-03-18', 'olive-and-basil', sampleMenus)).toBe(false);
+    const menusWithCuisine = sampleMenus.map(menu => ({ ...menu, cuisine: 'italian' }));
+    expect(isValidMenu('2025-03-18', 'olive-and-basil', menusWithCuisine)).toBe(false);
   });
-
   test('rejects invalid restaurant', () => {
-    expect(isValidMenu('2025-03-17', 'wrong-restaurant', sampleMenus)).toBe(false);
+    const menusWithCuisine = sampleMenus.map(menu => ({ ...menu, cuisine: 'italian' }));
+    expect(isValidMenu('2025-03-17', 'wrong-restaurant', menusWithCuisine)).toBe(false);
   });
 
   test('rejects invalid date format', () => {
-    expect(isValidMenu('17-03-2025', 'olive-and-basil', sampleMenus)).toBe(false);
+    const menusWithCuisine = sampleMenus.map(menu => ({ ...menu, cuisine: 'italian' }));
+    expect(isValidMenu('17-03-2025', 'olive-and-basil', menusWithCuisine)).toBe(false);
   });
 }); 

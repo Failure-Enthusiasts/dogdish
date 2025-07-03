@@ -3,9 +3,9 @@ import React from "react";
 const About = () => {
   return (
     <div className="max-w-2xl mx-auto p-8 bg-white rounded-lg shadow-md mt-10 text-black">
-      <h1 className="text-3xl font-bold mb-4">About Cater Me Up</h1>
+      <h1 className="text-3xl font-bold mb-4">About DogDish</h1>
       <p className="mb-4">
-        <strong>Cater Me Up</strong> is a project by Aldrick, Ronny, and Bradley. 
+        <strong>DogDish</strong> is a project by Aldrick, Ronny, and Bradley. 
         Our mission with this project is to make it easy for everyone at datadog and beyondto see, plan, and understand our catered meals.
       </p>
       <p className="mb-2">≈
@@ -18,7 +18,7 @@ const About = () => {
         <li>Review and rate system for us to better understand which cuisines are most popular</li>
       </ul>
       <p>
-        Thank you for using Cater Me Up! If you have feedback or suggestions, feel free to reach out.
+        Thank you for using DogDish! If you have feedback or suggestions, feel free to reach out.
       </p>
     </div>
   );

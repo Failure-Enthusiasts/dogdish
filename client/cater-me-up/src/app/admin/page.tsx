@@ -49,6 +49,7 @@ function AdminDashboardContent() {
     }
     
     loadMenuData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   const handleLogout = () => {
@@ -79,7 +80,7 @@ function AdminDashboardContent() {
 
   return (
     <>
-      <title>Admin Dashboard | Olive & Basil</title>
+      <title>Admin Dashboard</title>
       
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white shadow">

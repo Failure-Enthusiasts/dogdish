@@ -1,4 +1,3 @@
-import { NextRequest } from 'next/server';
 import { createApiSuccessResponse, createApiErrorResponse, handleApiError } from '@/utils/apiUtils';
 import { HttpStatus, ErrorCodes } from '@/types/errors';
 
@@ -9,7 +8,7 @@ interface Menu {
   eventDate: string;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Log the incoming request
     console.log('[API] GET /api/availableCuisine - Fetching available cuisines');
@@ -18,10 +17,10 @@ export async function GET(request: NextRequest) {
     // For now, we're using mock data but with proper error handling
     const menus: Menu[] = [
       {
-        cuisineSlug: 'olive-and-basil',
-        dateSlug: '2025-03-17',
-        cuisineName: 'Olive & Basil',
-        eventDate: 'Monday, March 17'
+        cuisineSlug: 'moroccan',
+        dateSlug: '2025-05-12',
+        cuisineName: 'Moroccan',
+        eventDate: 'Monday, May 12, 2025'
       },
       // In the future, add more menus from database
     ];

@@ -1,0 +1,98 @@
+{
+  "events": [
+    {
+      "weekday": "wednesday",
+      "iso_date": "2025-07-02",
+      "cuisine": "moroccan",
+      "entrees_and_sides": [
+        { "name": "Shabazi Spiced Chicken Souvlaki served with tzatziki sauce", "allergens": ["dairy"], "preferences": [] },
+        { "name": "Moroccan Harissa & Preserved Lemon Lamb Stew served with Harissa Yogurt", "allergens": ["dairy"], "preferences": [] },
+        { "name": "Toasted Farroto, Asparagus, Tomato, Cucumber, Feta Cheese", "allergens": ["gluten", "dairy"], "preferences": ["vegetarian"] },
+        { "name": "Ras al Hanout Sauteed Spring Green Beans", "allergens": [], "preferences": ["vegan"] },
+        { "name": "Kale Wild Rice with Lemon Agave Dressing", "allergens": [], "preferences": ["vegan"] },
+        { "name": "Mezze Salad with Seared Halloumi, Eggplant, Zucchini, Mint Yogurt Dressing", "allergens": ["dairy"], "preferences": ["vegetarian"] }
+      ],
+      "salad_bar": {
+        "toppings": [
+          { "name": "Baby Kale", "allergens": [], "preferences": [] },
+          { "name": "Za'atar Spiced Chickpeas", "allergens": [], "preferences": [] },
+          { "name": "Cherry Tomatoes", "allergens": [], "preferences": [] },
+          { "name": "Sliced Hot House Cucumbers", "allergens": [], "preferences": [] },
+          { "name": "Shaved Cello Carrot Coins", "allergens": [], "preferences": [] },
+          { "name": "Turmeric Cauliflower", "allergens": [], "preferences": [] },
+          { "name": "Tabbouleh", "allergens": [], "preferences": [] },
+          { "name": "Goat Cheese", "allergens": ["dairy"], "preferences": [] }
+        ],
+        "dressings": [
+          { "name": "Caesar Dressing", "allergens": ["egg", "dairy", "soy"], "preferences": [] },
+          { "name": "Lemon-Dijon Vinaigrette", "allergens": [], "preferences": [] },
+          { "name": "Apple Cider Vinaigrette", "allergens": [], "preferences": [] },
+          { "name": "Italian Dressing", "allergens": [], "preferences": [] }
+        ]
+      }
+    },
+    {
+      "weekday": "friday",
+      "iso_date": "2025-07-04",
+      "cuisine": "korean",
+      "entrees_and_sides": [
+        { "name": "Gochujang Roasted Salmon Fillet", "allergens": ["fish", "soy", "gluten", "sesame"], "preferences": [] },
+        { "name": "Beef Bulgogi", "allergens": ["soy", "sesame"], "preferences": [] },
+        { "name": "Vegan Kimchi & Tofu Fried Rice", "allergens": ["soy", "gluten", "sesame"], "preferences": ["vegan"] },
+        { "name": "Chili Garlic Baby Bok Choy", "allergens": ["soy", "sesame"], "preferences": ["vegan"] },
+        { "name": "Japchae", "allergens": ["soy", "sesame", "gluten"], "preferences": ["vegan"] },
+        { "name": "Napa Cabbage & Carrot Slaw, Ginger Vinaigrette", "allergens": ["soy", "sesame"], "preferences": ["vegan"] }
+      ],
+      "salad_bar": {
+        "toppings": [
+          { "name": "Boston Bibb", "allergens": [], "preferences": [] },
+          { "name": "Edamame", "allergens": [], "preferences": [] },
+          { "name": "Cherry Tomatoes", "allergens": [], "preferences": [] },
+          { "name": "Sliced Hot House Cucumbers", "allergens": [], "preferences": [] },
+          { "name": "Shaved Cello Carrot Coins", "allergens": [], "preferences": [] },
+          { "name": "Pickled Cucumber", "allergens": [], "preferences": [] },
+          { "name": "Red Pepper Banchan", "allergens": [], "preferences": [] },
+          { "name": "Danmuji", "allergens": [], "preferences": [] },
+          { "name": "Mozzarella", "allergens": ["dairy"], "preferences": [] }
+        ],
+        "dressings": [
+          { "name": "Caesar Dressing", "allergens": ["egg", "dairy", "soy"], "preferences": [] },
+          { "name": "Lemon-Dijon Vinaigrette", "allergens": [], "preferences": [] },
+          { "name": "Apple Cider Vinaigrette", "allergens": [], "preferences": [] },
+          { "name": "Italian Dressing", "allergens": [], "preferences": [] }
+        ]
+      }
+    },
+    {
+      "weekday": "monday",
+      "iso_date": "2025-07-07",
+      "cuisine": "french continental",
+      "entrees_and_sides": [
+        { "name": "Herb Marinated Grilled Flank Steak", "allergens": [], "preferences": [] },
+        { "name": "Grilled Herb Chicken Paillard, Carrot & Napa Cabbage Slaw", "allergens": [], "preferences": [] },
+        { "name": "Provencal Zucchini, Summer Squash Ratatouille", "allergens": [], "preferences": ["vegan"] },
+        { "name": "Sauteed Haricot Verts with Lemon Olive Oil and Crispy Shallots", "allergens": ["soy"], "preferences": ["vegan"] },
+        { "name": "Pomme Puree", "allergens": ["dairy"], "preferences": [] },
+        { "name": "Nicoise Salad with Olives, Cucumbers, Haricot Verts, Hard Boiled Eggs, and Emulsified Lemon Vinaigrette", "allergens": ["egg"], "preferences": ["vegetarian"] }
+      ],
+      "salad_bar": {
+        "toppings": [
+          { "name": "Baby Kale", "allergens": [], "preferences": [] },
+          { "name": "Green Lentils", "allergens": [], "preferences": [] },
+          { "name": "Cherry Tomatoes", "allergens": [], "preferences": [] },
+          { "name": "Sliced Hot House Cucumbers", "allergens": [], "preferences": [] },
+          { "name": "Shaved Cello Carrot Coins", "allergens": [], "preferences": [] },
+          { "name": "Shaved Fennel", "allergens": [], "preferences": [] },
+          { "name": "Castelvetrano Olives", "allergens": [], "preferences": [] },
+          { "name": "Gruyere", "allergens": [], "preferences": [] }
+        ],
+        "dressings": [
+          { "name": "Caesar Dressing", "allergens": ["egg", "dairy", "soy"], "preferences": [] },
+          { "name": "Lemon-Dijon Vinaigrette", "allergens": [], "preferences": [] },
+          { "name": "Apple Cider Vinaigrette", "allergens": [], "preferences": [] },
+          { "name": "Italian Dressing", "allergens": [], "preferences": [] }
+        ]
+      }
+    }
+  ]
+} 

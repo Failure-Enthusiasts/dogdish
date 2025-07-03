@@ -7,129 +7,61 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorDisplay from '@/components/ErrorDisplay';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import Link from 'next/link';
+import menuJson from '../utils/menuData.json';
 
-
-// Sample menu data from the JSON
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const sampleMenuData: Menu = {
-  cuisine: "Olive & Basil", 
-  event_date: "Monday, March 17",
-  event_date_iso: "2025-03-17",
-  menu_items: [
-      {
-        "title": "Balsamic Chicken",
-        "description": "Grilled chicken breast with blistered cherry tomatoes, confit garlic, balsamic glaze",
-        "preferences": [],
-        "allergens": [
-          "Garlic",
-          "Nightshades"
-        ]
-      },
-      {
-        "title": "Mediterranean Salmon",
-        "description": "Salmon with olives, tomatoes, capers, garlic, scallions, red wine vinaigrette",
-        "preferences": [
-          "PESCATARIAN"
-        ],
-        "allergens": [
-          "Garlic",
-          "Nightshades",
-          "Onions",
-          "Seafood"
-        ]
-      },
-      {
-        "title": "Vegan Agri Dolce Eggplant and Mixed Vegetables",
-        "description": "Braised eggplant, seasonal vegetables with sugar, red wine vinegar, basil and garlic",
-        "preferences": [
-          "VEGAN",
-          "VEGETARIAN"
-        ],
-        "allergens": [
-          "Garlic",
-          "Nightshades",
-          "Onions"
-        ]
-      },
-      {
-        "title": "Garden Salad",
-        "description": "Mixed green salad with cucumbers, tomatoes, carrots and peppers with side of dressing.",
-        "preferences": [
-          "VEGAN",
-          "LIGHT CARB"
-        ],
-        "allergens": [
-          "Nightshades"
-        ]
-      },
-      {
-        "title": "Garlic Bread",
-        "description": "Garlic bread",
-        "preferences": [],
-        "allergens": [
-          "Dairy",
-          "Garlic",
-          "Wheat"
-        ]
-      },
-      {
-        "title": "Gluten Free Spaghetti Aglio Olio - Vegan/No Cheese",
-        "description": "Gluten Free Spaghetti with olive oil - No Cheese",
-        "preferences": [
-          "VEGAN"
-        ],
-        "allergens": [
-          "Garlic"
-        ]
-      },
-      {
-        "title": "Italian Roasted Vegetables",
-        "description": "Roasted zucchini, eggplant, peppers with herbs.",
-        "preferences": [
-          "VEGAN",
-          "LIGHT CARB"
-        ],
-        "allergens": [
-          "Garlic",
-          "Nightshades"
-        ]
-      },
-      {
-        "title": "Linguini Aglio Olio - Vegan/No Cheese",
-        "description": "Linguini with olive oil - No Cheese",
-        "preferences": [
-          "VEGAN"
-        ],
-        "allergens": [
-          "Garlic",
-          "Wheat"
-        ]
-      },
-      {
-        "title": "Green Goddess Dressing",
-        "description": "Served with garden salad.",
-        "preferences": [
-          "VEGAN"
-        ],
-        "allergens": []
-      }
-    ]
+// Define types for the imported JSON structure
+interface RawMenuItem {
+  name: string;
+  allergens: string[];
+  preferences: string[];
+}
+interface RawEvent {
+  weekday: string;
+  iso_date: string;
+  cuisine: string;
+  entrees_and_sides: RawMenuItem[];
+  salad_bar: {
+    toppings: RawMenuItem[];
+    dressings: RawMenuItem[];
   };
+}
+interface RawMenuJson {
+  events: RawEvent[];
+}
 
-
-
-// Let's create a type for our menu data
-// type MenuData = {
-//   cuisine: string; 
-//   event_date: string;
-//   event_date_iso: string;
-//   menu_items: Array<{
-//     title: string;
-//     description: string;
-//     preferences: string[];
-//     allergens: string[];
-//   }>;
-// };
+// Helper function to transform the imported JSON to Menu[]
+const transformMenuData = (jsonData: RawMenuJson): Menu[] => {
+  if (!jsonData || !Array.isArray(jsonData.events)) return [];
+  return jsonData.events.map((event) => {
+    // Flatten entrees_and_sides, salad_bar.toppings, and salad_bar.dressings into menu_items
+    const menu_items = [
+      ...(event.entrees_and_sides || []).map((item) => ({
+        title: item.name,
+        description: '', // No description in source
+        preferences: item.preferences || [],
+        allergens: item.allergens || [],
+      })),
+      ...((event.salad_bar?.toppings || []).map((item) => ({
+        title: item.name,
+        description: 'Salad Bar Topping',
+        preferences: item.preferences || [],
+        allergens: item.allergens || [],
+      })) || []),
+      ...((event.salad_bar?.dressings || []).map((item) => ({
+        title: item.name,
+        description: 'Salad Bar Dressing',
+        preferences: item.preferences || [],
+        allergens: item.allergens || [],
+      })) || []),
+    ];
+    return {
+      cuisine: event.cuisine,
+      event_date: event.weekday.charAt(0).toUpperCase() + event.weekday.slice(1),
+      event_date_iso: event.iso_date,
+      menu_items,
+    };
+  });
+};
 
 // Helper function to convert a string to slug format
 const toSlug = (str: string) => {
@@ -157,10 +89,17 @@ const isValidMenu = (dateSlug: string, cuisineSlug: string, availableMenus: Menu
   return isValid;
 };
 
+// Add a date formatting function like in prev-events and home page
+function formatEventDate(iso: string) {
+  const [year, month, day] = iso.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+  return d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 const MenuRendererContent = () => {
   const params = useParams();
   const [activeFilter, setActiveFilter] = useState('No Preferences');
-  const [activeAllergenFilter, setActiveAllergenFilter] = useState('All Allergens');
+  const [activeAllergenFilter, setActiveAllergenFilter] = useState('Show All Allergens');
   const [menuData, setMenuData] = useState<Menu | null>(null);
   const [loading, setLoading] = useState(true);
   const { error, isError, clearError, handleError } = useErrorHandler();
@@ -172,72 +111,8 @@ const MenuRendererContent = () => {
     try {
       console.log('Loading menu data for:', { dateSlug, cuisineSlug });
       setLoading(true);
-      
-      // In a real app, you'd fetch this from an API
-      // For now, we'll use the static data with proper error handling
-      const availableMenus = [
-        {
-          "cuisine": "Olive & Basil",
-          "event_date": "Monday, March 17",
-          "event_date_iso": "2025-03-17",
-          "menu_items": [
-            {
-              "title": "Balsamic Chicken",
-              "description": "Grilled chicken breast with blistered cherry tomatoes, confit garlic, balsamic glaze",
-              "preferences": [],
-              "allergens": ["Garlic", "Nightshades"]
-            },
-            {
-              "title": "Mediterranean Salmon",
-              "description": "Salmon with olives, tomatoes, capers, garlic, scallions, red wine vinaigrette",
-              "preferences": ["PESCATARIAN"],
-              "allergens": ["Garlic", "Nightshades", "Onions", "Seafood"]
-            },
-            {
-              "title": "Vegan Agri Dolce Eggplant and Mixed Vegetables",
-              "description": "Braised eggplant, seasonal vegetables with sugar, red wine vinegar, basil and garlic",
-              "preferences": ["VEGAN", "VEGETARIAN"],
-              "allergens": ["Garlic", "Nightshades", "Onions"]
-            },
-            {
-              "title": "Garden Salad",
-              "description": "Mixed green salad with cucumbers, tomatoes, carrots and peppers with side of dressing.",
-              "preferences": ["VEGAN", "LIGHT CARB"],
-              "allergens": ["Nightshades"]
-            },
-            {
-              "title": "Garlic Bread",
-              "description": "Garlic bread",
-              "preferences": [],
-              "allergens": ["Dairy", "Garlic", "Wheat"]
-            },
-            {
-              "title": "Gluten Free Spaghetti Aglio Olio - Vegan/No Cheese",
-              "description": "Gluten Free Spaghetti with olive oil - No Cheese",
-              "preferences": ["VEGAN"],
-              "allergens": ["Garlic"]
-            },
-            {
-              "title": "Italian Roasted Vegetables",
-              "description": "Roasted zucchini, eggplant, peppers with herbs.",
-              "preferences": ["VEGAN", "LIGHT CARB"],
-              "allergens": ["Garlic", "Nightshades"]
-            },
-            {
-              "title": "Linguini Aglio Olio - Vegan/No Cheese",
-              "description": "Linguini with olive oil - No Cheese",
-              "preferences": ["VEGAN"],
-              "allergens": ["Garlic", "Wheat"]
-            },
-            {
-              "title": "Green Goddess Dressing",
-              "description": "Served with garden salad.",
-              "preferences": ["VEGAN"],
-              "allergens": []
-            }
-          ]
-        }
-      ];
+      // Use the transformed menu data
+      const availableMenus = transformMenuData(menuJson);
 
       // Validate parameters
       if (!dateSlug || !cuisineSlug) {
@@ -276,6 +151,7 @@ const MenuRendererContent = () => {
 
   useEffect(() => {
     loadMenuData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateSlug, cuisineSlug]);
 
   if (loading) {
@@ -304,26 +180,36 @@ const MenuRendererContent = () => {
 
   // Get unique dietary preferences
   const dietaryPreferences = ['No Preferences', 'Vegan', 'Vegetarian', 'Pescatarian'];
-  // Get unique allergens
-  // TODO: fetch unique allergens from menu items 
-  // const allergens = [...new Set(menuData.menu_items.flatMap(item => item.allergens))];
-  const allergens = ['All Allergens', 'Dairy', 'Garlic', 'Nightshades', 'Onions', 'Seafood', 'Wheat'];
+  // Get unique allergens from menu items
+  const allergens = [
+    'Show All Allergens',
+    ...Array.from(new Set(menuData.menu_items.flatMap(item => item.allergens.map(a => a.charAt(0).toUpperCase() + a.slice(1).toLowerCase())))).sort()
+  ];
   
   // Filter menu items based on active filters
   const filteredItems = menuData.menu_items.filter(item => {
     // Dietary preference filter
     if (activeFilter !== 'No Preferences') {
-      const matchesPreference = item.preferences.some(
-        pref => pref.toLowerCase() === activeFilter.toLowerCase()
-      );
-      if (!matchesPreference) return false;
+      const prefs = item.preferences.map(p => p.toUpperCase());
+      if (activeFilter === 'Pescatarian') {
+        const isPescatarian =
+          prefs.includes('PESCATARIAN') ||
+          prefs.includes('VEGETARIAN') ||
+          prefs.includes('VEGAN') ||
+          item.allergens.some(a => a.toLowerCase() === 'seafood' || a.toLowerCase() === 'fish');
+        if (!isPescatarian) return false;
+      } else if (activeFilter === 'Vegetarian') {
+        const isVegetarian = prefs.includes('VEGETARIAN') || prefs.includes('VEGAN');
+        if (!isVegetarian) return false;
+      } else if (activeFilter === 'Vegan') {
+        const isVegan = prefs.includes('VEGAN');
+        if (!isVegan) return false;
+      }
     }
-    
     // Allergen filter (only show items WITHOUT the selected allergen)
-    if (activeAllergenFilter !== 'All Allergens') {
-      return !item.allergens.includes(activeAllergenFilter);
+    if (activeAllergenFilter !== 'Show All Allergens') {
+      return !item.allergens.map(a => a.toLowerCase()).includes(activeAllergenFilter.toLowerCase());
     }
-    
     return true;
   });
   
@@ -337,7 +223,7 @@ const MenuRendererContent = () => {
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span>{menuData.event_date}</span>
+            <span>{formatEventDate(menuData.event_date_iso)}</span>
           </div>
         </div>
         

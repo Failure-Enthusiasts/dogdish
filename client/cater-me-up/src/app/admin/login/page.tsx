@@ -50,7 +50,7 @@ export default function AdminLogin() {
   return (
     <>
       <Head>
-        <title>Admin Login | Olive & Basil</title>
+        <title>Admin Login</title>
       </Head>
       
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
