@@ -257,7 +257,9 @@ const MenuRendererContent = () => {
               </button>
             ))}
           </div>
-          
+
+          <hr className="my-4 border-gray-300 py-1" />
+
           <div className="flex flex-wrap gap-2">
             {allergens.map(allergen => (
               <button

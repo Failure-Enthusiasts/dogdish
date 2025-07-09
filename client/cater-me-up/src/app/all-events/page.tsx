@@ -103,7 +103,7 @@ function PreviousEventsContent() {
            {upcomingEvents.length > 0 && (
           <>
             <div className="text-lg font-semibold text-gray-700 mb-2 mt-8">Upcoming Events</div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+            <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">
               {upcomingEvents.map((event, index) => (
                 <Link
                   key={index}
