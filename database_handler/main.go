@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/storage"
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
 )
@@ -22,21 +24,23 @@ type EntreesAndSidesOrSaladBar struct {
 
 type Event struct {
 	Weekday         string                      `json:"weekday" validate:"required"`
-	ISODate         string                      `json:"iso_date" validate:"required"`
+	ISODate         string                      `json:"iso_date" validate:"required,datetime=2006-01-02"`
 	Cuisine         string                      `json:"cuisine" validate:"required"`
 	EntreesAndSides []EntreesAndSidesOrSaladBar `json:"entrees_and_sides" validate:"required"`
 	SaladBar        []EntreesAndSidesOrSaladBar `json:"salad_bar" validate:"required"`
 }
 
-type EventValidator struct {
-	validator *validator.Validate
+type FieldErrorResponse struct {
+	Error      string       `json:"error"`
+	FieldError []FieldError `json:"field_errors"`
+}
+type ErrorResponse struct {
+	Error string `json:"error"`
 }
 
-func (cv *EventValidator) Validate(e Event) error {
-	if err := cv.validator.Struct(e); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	return nil
+type FieldError struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
 }
 
 func main() {
@@ -58,13 +62,70 @@ func main() {
 		body := c.Request().Body
 		defer body.Close()
 
+		validate := validator.New(validator.WithRequiredStructEnabled())
+
 		var event Event
 		if err := json.NewDecoder(body).Decode(&event); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{
-				"error": "Invalid JSON",
+			return c.JSON(http.StatusBadRequest, FieldErrorResponse{
+				Error: "Invalid JSON",
 			})
 		}
-		return c.JSON(http.StatusOK, event)
+
+		err = validate.Struct(event)
+		if err != nil {
+			var fieldErrors []FieldError
+
+			for _, err := range err.(validator.ValidationErrors) {
+				fieldErrors = append(fieldErrors, FieldError{
+					Field:   err.Field(),
+					Message: err.Tag(),
+				})
+			}
+			return c.JSON(http.StatusBadRequest, FieldErrorResponse{
+				Error:      "Invalid Schema",
+				FieldError: fieldErrors,
+			})
+		}
+
+		isoDate, err := time.Parse(time.DateOnly, event.ISODate)
+		if err != nil {
+			fmt.Printf("Error: %q\n", err.Error())
+			return c.JSON(http.StatusBadRequest, FieldErrorResponse{
+				Error: "Invalid Schema",
+				FieldError: []FieldError{
+					{
+						Field:   "ISODate",
+						Message: "Failed to parse ",
+					},
+				},
+			})
+		}
+		fmt.Printf("Date Time: %q\n", isoDate.Format(time.DateOnly))
+
+		queries := storage.New(db)
+		insertEventParams := storage.InsertEventParams{
+			Date:    event.Weekday,
+			IsoDate: isoDate,
+		}
+		newEventID, err := queries.InsertEvent(c.Request().Context(), insertEventParams)
+		if err != nil {
+			fmt.Printf("Failed to insert event into database: %q", err.Error())
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Failed to create event",
+			})
+		}
+
+		newCuisineID, err := queries.InsertCuisine(c.Request().Context(), event.Cuisine)
+		if err != nil {
+			fmt.Printf("Failed to insert cuisine into database: %q", err.Error())
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Failed to create cuisine",
+			})
+		}
+		return c.JSON(http.StatusOK, map[string]uuid.UUID{
+			"event_id":   newEventID,
+			"cuisine_id": newCuisineID,
+		})
 	})
 	e.Logger.Fatal(e.Start(":1323"))
 
