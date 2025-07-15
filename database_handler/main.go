@@ -17,9 +17,9 @@ import (
 )
 
 type EntreesAndSidesOrSaladBar struct {
-	Name        string   `json:"name"`
-	Allergens   []string `json:"allergens"`
-	Preferences []string `json:"preferences"`
+	Name       string   `json:"name"`
+	Allergens  []string `json:"allergens"`
+	Preference string   `json:"preference"`
 }
 
 type Event struct {
@@ -114,6 +114,7 @@ func main() {
 		qtx := queries.WithTx(tx)
 		defer func() {
 			if err != nil {
+				fmt.Printf("\n\n\nError Found: %q\n\n\nRolling Back\n\n\n")
 				tx.Rollback()
 			}
 		}()
@@ -138,32 +139,42 @@ func main() {
 			})
 		}
 
+		var entreePreference storage.DogdishPreferenceEnum
+		var foodID uuid.UUID
 		for _, entree := range event.EntreesAndSides {
-			var entreePreference string
-
-			switch entree.Preferences {
+			switch entree.Preference {
 			case string(storage.DogdishPreferenceEnumValue0):
-				entreePreference = string(storage.DogdishPreferenceEnumValue0)
-
+				entreePreference = storage.DogdishPreferenceEnumValue0
 			case string(storage.DogdishPreferenceEnumVegan):
-				entreePreference = append(entreePreference, string(storage.DogdishPreferenceEnumVegan))
-
+				entreePreference = storage.DogdishPreferenceEnumVegan
 			case string(storage.DogdishPreferenceEnumVegetarian):
-				entreePreference = append(entreePreference, string(storage.DogdishPreferenceEnumVegetarian))
+				entreePreference = storage.DogdishPreferenceEnumVegetarian
 			}
 
-			foodID, err := qtx.InsertFood(c.Request().Context(), storage.InsertFoodParams{
+			foodID, err = qtx.InsertFood(c.Request().Context(), storage.InsertFoodParams{
 				CuisineID:  newCuisineID,
 				EventID:    newEventID,
 				Name:       entree.Name,
 				FoodType:   storage.DogdishFoodTypeEnumEntreesAndSides,
-				Preference: storage.DogdishPreferenceEnumValue0,
+				Preference: storage.DogdishPreferenceEnum(entreePreference),
+			})
+			if err != nil {
+				fmt.Printf("Failed to insert food into database: %q", err.Error())
+				return c.JSON(http.StatusInternalServerError, ErrorResponse{
+					Error: "Failed to create food",
+				})
+			}
+		}
+		if err := tx.Commit(); err != nil {
+			fmt.Printf("Failed to commit transaction: %q", err.Error())
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Failed to create food",
 			})
 		}
-
 		return c.JSON(http.StatusOK, map[string]uuid.UUID{
 			"event_id":   newEventID,
 			"cuisine_id": newCuisineID,
+			"food_id":    foodID,
 		})
 
 	})

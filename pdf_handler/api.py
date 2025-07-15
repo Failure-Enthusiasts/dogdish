@@ -14,7 +14,6 @@ app = FastAPI(
     description="A service for converting PDF files to structured data",
     version="0.0.1",
     docs_url="/docs",
-    redoc_url="/redoc"
 )
 
 
@@ -23,7 +22,7 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 class Item(BaseModel):
     name: str
     allergens: list[str]
-    preferences: list[str]
+    preference: str | None
 
 
 class SaladBar(BaseModel):
@@ -78,6 +77,8 @@ def process_pdf(
         return JSONResponse(status_code=400, content={"error": err})
 
     cleaned_res = data.strip("```json").strip("```")
+
+    print(f"The cleaned data was:\n {cleaned_res}")
 
     # Validate the data
     try:
