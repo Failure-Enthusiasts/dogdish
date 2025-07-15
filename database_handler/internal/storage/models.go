@@ -57,6 +57,7 @@ func (ns NullDogdishFoodTypeEnum) Value() (driver.Value, error) {
 type DogdishPreferenceEnum string
 
 const (
+	DogdishPreferenceEnumValue0     DogdishPreferenceEnum = ""
 	DogdishPreferenceEnumVegan      DogdishPreferenceEnum = "vegan"
 	DogdishPreferenceEnumVegetarian DogdishPreferenceEnum = "vegetarian"
 )
@@ -113,10 +114,12 @@ type DogdishEvent struct {
 }
 
 type DogdishFood struct {
-	ID        uuid.UUID
-	CuisineID uuid.NullUUID
-	EventID   uuid.NullUUID
-	Name      string
+	ID         uuid.UUID
+	CuisineID  uuid.UUID
+	EventID    uuid.UUID
+	Name       string
+	FoodType   DogdishFoodTypeEnum
+	Preference DogdishPreferenceEnum
 }
 
 type DogdishFoodAllergen struct {

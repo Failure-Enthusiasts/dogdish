@@ -40,6 +40,7 @@ func (q *Queries) GetAllAllergens(ctx context.Context) ([]DogdishAllergen, error
 }
 
 const getAllCuisines = `-- name: GetAllCuisines :many
+
 SELECT id, name FROM dogdish.cuisine
 `
 
@@ -121,7 +122,7 @@ func (q *Queries) GetAllFoodAllergens(ctx context.Context) ([]DogdishFoodAllerge
 }
 
 const getAllFoods = `-- name: GetAllFoods :many
-SELECT id, cuisine_id, event_id, name FROM dogdish.food
+SELECT id, cuisine_id, event_id, name, food_type, preference FROM dogdish.food
 `
 
 func (q *Queries) GetAllFoods(ctx context.Context) ([]DogdishFood, error) {
@@ -138,6 +139,8 @@ func (q *Queries) GetAllFoods(ctx context.Context) ([]DogdishFood, error) {
 			&i.CuisineID,
 			&i.EventID,
 			&i.Name,
+			&i.FoodType,
+			&i.Preference,
 		); err != nil {
 			return nil, err
 		}
@@ -153,10 +156,10 @@ func (q *Queries) GetAllFoods(ctx context.Context) ([]DogdishFood, error) {
 }
 
 const getAllFoodsByCuisineId = `-- name: GetAllFoodsByCuisineId :many
-SELECT id, cuisine_id, event_id, name FROM dogdish.food WHERE cuisine_id = $1
+SELECT id, cuisine_id, event_id, name, food_type, preference FROM dogdish.food WHERE cuisine_id = $1
 `
 
-func (q *Queries) GetAllFoodsByCuisineId(ctx context.Context, cuisineID uuid.NullUUID) ([]DogdishFood, error) {
+func (q *Queries) GetAllFoodsByCuisineId(ctx context.Context, cuisineID uuid.UUID) ([]DogdishFood, error) {
 	rows, err := q.db.QueryContext(ctx, getAllFoodsByCuisineId, cuisineID)
 	if err != nil {
 		return nil, err
@@ -170,6 +173,8 @@ func (q *Queries) GetAllFoodsByCuisineId(ctx context.Context, cuisineID uuid.Nul
 			&i.CuisineID,
 			&i.EventID,
 			&i.Name,
+			&i.FoodType,
+			&i.Preference,
 		); err != nil {
 			return nil, err
 		}
@@ -185,11 +190,10 @@ func (q *Queries) GetAllFoodsByCuisineId(ctx context.Context, cuisineID uuid.Nul
 }
 
 const getAllFoodsByEventId = `-- name: GetAllFoodsByEventId :many
-
-SELECT id, cuisine_id, event_id, name FROM dogdish.food WHERE event_id = $1
+SELECT id, cuisine_id, event_id, name, food_type, preference FROM dogdish.food WHERE event_id = $1
 `
 
-func (q *Queries) GetAllFoodsByEventId(ctx context.Context, eventID uuid.NullUUID) ([]DogdishFood, error) {
+func (q *Queries) GetAllFoodsByEventId(ctx context.Context, eventID uuid.UUID) ([]DogdishFood, error) {
 	rows, err := q.db.QueryContext(ctx, getAllFoodsByEventId, eventID)
 	if err != nil {
 		return nil, err
@@ -203,6 +207,8 @@ func (q *Queries) GetAllFoodsByEventId(ctx context.Context, eventID uuid.NullUUI
 			&i.CuisineID,
 			&i.EventID,
 			&i.Name,
+			&i.FoodType,
+			&i.Preference,
 		); err != nil {
 			return nil, err
 		}
@@ -229,7 +235,6 @@ func (q *Queries) InsertAllergen(ctx context.Context, name string) (uuid.UUID, e
 }
 
 const insertCuisine = `-- name: InsertCuisine :one
-
 INSERT INTO dogdish.cuisine (name) VALUES ($1) RETURNING id
 `
 
@@ -257,17 +262,25 @@ func (q *Queries) InsertEvent(ctx context.Context, arg InsertEventParams) (uuid.
 }
 
 const insertFood = `-- name: InsertFood :one
-INSERT INTO dogdish.food (cuisine_id, event_id, name) VALUES ($1, $2, $3) RETURNING id
+INSERT INTO dogdish.food (cuisine_id, event_id, name, food_type, preference) VALUES ($1, $2, $3, $4, $5) RETURNING id
 `
 
 type InsertFoodParams struct {
-	CuisineID uuid.NullUUID
-	EventID   uuid.NullUUID
-	Name      string
+	CuisineID  uuid.UUID
+	EventID    uuid.UUID
+	Name       string
+	FoodType   DogdishFoodTypeEnum
+	Preference DogdishPreferenceEnum
 }
 
 func (q *Queries) InsertFood(ctx context.Context, arg InsertFoodParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, insertFood, arg.CuisineID, arg.EventID, arg.Name)
+	row := q.db.QueryRowContext(ctx, insertFood,
+		arg.CuisineID,
+		arg.EventID,
+		arg.Name,
+		arg.FoodType,
+		arg.Preference,
+	)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err

@@ -103,11 +103,26 @@ func main() {
 		fmt.Printf("Date Time: %q\n", isoDate.Format(time.DateOnly))
 
 		queries := storage.New(db)
+		tx, err := db.BeginTx(c.Request().Context(), nil)
+		if err != nil {
+			fmt.Errorf("Failed to begin transaction: %w", err)
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Failed to create event",
+			})
+		}
+
+		qtx := queries.WithTx(tx)
+		defer func() {
+			if err != nil {
+				tx.Rollback()
+			}
+		}()
+
 		insertEventParams := storage.InsertEventParams{
 			Date:    event.Weekday,
 			IsoDate: isoDate,
 		}
-		newEventID, err := queries.InsertEvent(c.Request().Context(), insertEventParams)
+		newEventID, err := qtx.InsertEvent(c.Request().Context(), insertEventParams)
 		if err != nil {
 			fmt.Printf("Failed to insert event into database: %q", err.Error())
 			return c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -115,17 +130,42 @@ func main() {
 			})
 		}
 
-		newCuisineID, err := queries.InsertCuisine(c.Request().Context(), event.Cuisine)
+		newCuisineID, err := qtx.InsertCuisine(c.Request().Context(), event.Cuisine)
 		if err != nil {
 			fmt.Printf("Failed to insert cuisine into database: %q", err.Error())
 			return c.JSON(http.StatusInternalServerError, ErrorResponse{
 				Error: "Failed to create cuisine",
 			})
 		}
+
+		for _, entree := range event.EntreesAndSides {
+			var entreePreference string
+
+			switch entree.Preferences {
+			case string(storage.DogdishPreferenceEnumValue0):
+				entreePreference = string(storage.DogdishPreferenceEnumValue0)
+
+			case string(storage.DogdishPreferenceEnumVegan):
+				entreePreference = append(entreePreference, string(storage.DogdishPreferenceEnumVegan))
+
+			case string(storage.DogdishPreferenceEnumVegetarian):
+				entreePreference = append(entreePreference, string(storage.DogdishPreferenceEnumVegetarian))
+			}
+
+			foodID, err := qtx.InsertFood(c.Request().Context(), storage.InsertFoodParams{
+				CuisineID:  newCuisineID,
+				EventID:    newEventID,
+				Name:       entree.Name,
+				FoodType:   storage.DogdishFoodTypeEnumEntreesAndSides,
+				Preference: storage.DogdishPreferenceEnumValue0,
+			})
+		}
+
 		return c.JSON(http.StatusOK, map[string]uuid.UUID{
 			"event_id":   newEventID,
 			"cuisine_id": newCuisineID,
 		})
+
 	})
 	e.Logger.Fatal(e.Start(":1323"))
 
