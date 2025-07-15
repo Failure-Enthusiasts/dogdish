@@ -8,7 +8,7 @@ INSERT INTO dogdish.event (date, iso_date) VALUES ($1, $2) RETURNING id;
 INSERT INTO dogdish.allergen (name) VALUES ($1) RETURNING id;
 
 -- name: InsertFood :one
-INSERT INTO dogdish.food (cuisine_id, event_id, name) VALUES ($1, $2, $3) RETURNING id;
+INSERT INTO dogdish.food (cuisine_id, event_id, name, food_type, preference) VALUES ($1, $2, $3, $4, $5) RETURNING id;
 
 -- name: InsertFoodAllergen :one
 INSERT INTO dogdish.food_allergen (food_id, allergen_id) VALUES ($1, $2) RETURNING (food_id, allergen_id);

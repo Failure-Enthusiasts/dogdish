@@ -1,6 +1,6 @@
 from google import genai
 from google.genai.models import types
-from ddtrace import tracer
+from ddtrace.trace import tracer
 
 from logger import logger
 
