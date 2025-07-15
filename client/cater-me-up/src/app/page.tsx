@@ -125,10 +125,10 @@ function HomeContent() {
           )}
         </div>
         {/* Main + Side Cards Layout */}
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col md:flex-row gap-6">
           {/* Previous Event Card */}
           {prevEvent && (
-            <div className="flex-1 bg-gray-100 border rounded-lg p-4 shadow-sm min-w-[220px] max-w-xs mx-auto lg:mx-0">
+            <div className="order-2 md:order-1 flex-1 bg-gray-100 border rounded-lg p-4 shadow-sm min-w-[220px] max-w-xs mx-auto lg:mx-0">
               <div className="font-semibold text-gray-700 mb-1">Previous Event</div>
               <div className="text-lg font-bold text-gray-800 mb-1">{prevEvent.cuisine}</div>
               <div className="text-gray-500 text-sm mb-2">{formatEventDate(prevEvent.iso_date)}</div>
@@ -137,11 +137,11 @@ function HomeContent() {
                   <li key={item.name}>{item.name}</li>
                 ))}
               </ul>
-              <button className="text-xs text-blue-700 hover:underline" onClick={() => window.location.href = `/${prevEvent.iso_date}/${toSlug(prevEvent.cuisine)}`}>View</button>
+              <button className="text-xs text-blue-700 hover:underline" onClick={() => window.location.href = `/${prevEvent.iso_date}/${toSlug(prevEvent.cuisine)}`}>View Menu</button>
             </div>
           )}
-          {/* Main Event Card (more compact) */}
-          <div className="flex-[2] bg-white border rounded-lg p-4 shadow-md">
+          {/* Main Event Card */}
+          <div className="order-1 md:order-2 flex-[2] bg-white border rounded-lg p-4 shadow-md">
             <div className="mb-4 font-semibold text-gray-800 text-lg">Next Event Menu</div>
             {currEvent ? (() => {
               const menuItems = getMenuPreview(currEvent, 6);
@@ -184,7 +184,7 @@ function HomeContent() {
           </div>
           {/* Next-Next Event Card */}
           {nextNextEvent && (
-            <div className="flex-1 bg-gray-100 border rounded-lg p-4 shadow-sm min-w-[220px] max-w-xs mx-auto lg:mx-0">
+            <div className="order-3 md:order-3  flex-1 bg-gray-100 border rounded-lg p-4 shadow-sm min-w-[220px] max-w-xs mx-auto lg:mx-0">
               <div className="font-semibold text-gray-700 mb-1">Upcoming Event</div>
               <div className="text-lg font-bold text-gray-800 mb-1">{nextNextEvent.cuisine}</div>
               <div className="text-gray-500 text-sm mb-2">{formatEventDate(nextNextEvent.iso_date)}</div>
@@ -193,7 +193,7 @@ function HomeContent() {
                   <li key={item.name}>{item.name}</li>
                 ))}
               </ul>
-              <button className="text-xs text-blue-700 hover:underline" onClick={() => window.location.href = `/${nextNextEvent.iso_date}/${toSlug(nextNextEvent.cuisine)}`}>View</button>
+              <button className="text-xs text-blue-700 hover:underline" onClick={() => window.location.href = `/${nextNextEvent.iso_date}/${toSlug(nextNextEvent.cuisine)}`}>View Menu</button>
             </div>
           )}
         </div>

@@ -17,7 +17,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "DogDish",
-  description: "See all the menus and food options from last week or tomorrow",
+  description: "See, plan, and understand our catered meals.",
+  themeColor: '#2563eb',
+  appleWebApp: {
+    capable: true,
+    title: 'DogDish',
+    statusBarStyle: 'default',
+  },
 };
 
 export default function RootLayout({
@@ -27,6 +33,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#2563eb" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="DogDish" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <link rel="apple-touch-icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.ico" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

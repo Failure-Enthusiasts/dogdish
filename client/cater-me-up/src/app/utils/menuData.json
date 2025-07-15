@@ -2,7 +2,7 @@
   "events": [
     {
       "weekday": "wednesday",
-      "iso_date": "2025-07-02",
+      "iso_date": "2025-07-14",
       "cuisine": "moroccan",
       "entrees_and_sides": [
         { "name": "Shabazi Spiced Chicken Souvlaki served with tzatziki sauce", "allergens": ["dairy"], "preferences": [] },
@@ -33,7 +33,7 @@
     },
     {
       "weekday": "friday",
-      "iso_date": "2025-07-04",
+      "iso_date": "2025-07-16",
       "cuisine": "korean",
       "entrees_and_sides": [
         { "name": "Gochujang Roasted Salmon Fillet", "allergens": ["fish", "soy", "gluten", "sesame"], "preferences": [] },
@@ -65,7 +65,7 @@
     },
     {
       "weekday": "monday",
-      "iso_date": "2025-07-07",
+      "iso_date": "2025-07-18",
       "cuisine": "french continental",
       "entrees_and_sides": [
         { "name": "Herb Marinated Grilled Flank Steak", "allergens": [], "preferences": [] },
