@@ -31,14 +31,14 @@ class PDFGenAI:
               "allergens": [
                 "dairy"
               ],
-              "preferences": []
+              "preference": "vegetarian"
             },
             {
               "name": "Moroccan Harissa & Preserved Lemon Lamb Stew served with Harissa Yogurt",
               "allergens": [
                 "dairy"
               ],
-              "preferences": []
+              "preference": "vegetarian"
             },
             {
               "name": "Toasted Farroto, Asparagus, Tomato, Cucumber, Feta Cheese",
@@ -46,23 +46,17 @@ class PDFGenAI:
                 "gluten",
                 "dairy"
               ],
-              "preferences": [
-                "vegetarian"
-              ]
+              "preference": "vegetarian"
             },
             {
               "name": "Ras al Hanout Sauteed Spring Green Beans",
               "allergens": [],
-              "preferences": [
-                "vegan"
-              ]
+              "preference": "vegan"
             },
             {
               "name": "Kale Wild Rice with Lemon Agave Dressing",
               "allergens": [],
-              "preferences": [
-                "vegan"
-              ]
+              "preference": "vegan"
             }
           ],
           "salad_bar": {
@@ -70,44 +64,44 @@ class PDFGenAI:
               {
                 "name": "Baby Kale",
                 "allergens": [],
-                "preferences": []
+                "preference": "vegetarian"
               },
               {
                 "name": "Za’atar Spiced Chickpeas",
                 "allergens": [],
-                "preferences": []
+                "preference": "vegetarian"
               },
               {
                 "name": "Cherry Tomatoes",
                 "allergens": [],
-                "preferences": []
+                "preference": "vegetarian"
               },
               {
                 "name": "Sliced Hot House Cucumbers",
                 "allergens": [],
-                "preferences": []
+                "preference": "vegetarian"
               },
               {
                 "name": "Shaved Cello Carrot Coins",
                 "allergens": [],
-                "preferences": []
+                "preference": "vegetarian"
               },
               {
                 "name": "Turmeric Cauliflower",
                 "allergens": [],
-                "preferences": []
+                "preference": "vegetarian"
               },
               {
                 "name": "Tabbouleh",
                 "allergens": [],
-                "preferences": []
+                "preference": "vegetarian"
               },
               {
                 "name": "Goat Cheese",
                 "allergens": [
                   "dairy"
                 ],
-                "preferences": []
+                "preference": "vegetarian"
               }
             ],
             "dressings": [
@@ -118,22 +112,22 @@ class PDFGenAI:
                   "dairy",
                   "soy"
                 ],
-                "preferences": []
+                "preference": ""
               },
               {
                 "name": "Lemon-Dijon Vinaigrette",
                 "allergens": [],
-                "preferences": []
+                "preference": ""
               },
               {
                 "name": "Apple Cider Vinaigrette",
                 "allergens": [],
-                "preferences": []
+                "preference": ""
               },
               {
                 "name": "Italian Dressing",
                 "allergens": [],
-                "preferences": []
+                "preference": ""
               }
             ]
           }

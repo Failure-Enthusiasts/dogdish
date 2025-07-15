@@ -16,7 +16,8 @@ type DogdishFoodTypeEnum string
 
 const (
 	DogdishFoodTypeEnumEntreesAndSides DogdishFoodTypeEnum = "entrees_and_sides"
-	DogdishFoodTypeEnumSaladBar        DogdishFoodTypeEnum = "salad_bar"
+	DogdishFoodTypeEnumToppings        DogdishFoodTypeEnum = "toppings"
+	DogdishFoodTypeEnumDressings       DogdishFoodTypeEnum = "dressings"
 )
 
 func (e *DogdishFoodTypeEnum) Scan(src interface{}) error {

@@ -1,7 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS dogdish;
 
 CREATE TYPE dogdish.preference_enum AS ENUM ('', 'vegan', 'vegetarian');
-CREATE TYPE dogdish.food_type_enum AS ENUM ('entrees_and_sides', 'salad_bar');
+CREATE TYPE dogdish.food_type_enum AS ENUM ('entrees_and_sides', 'toppings', 'dressings');
 
 CREATE TABLE dogdish.cuisine (
   id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
