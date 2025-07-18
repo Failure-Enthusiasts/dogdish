@@ -120,10 +120,10 @@ type DogdishFood struct {
 	EventID    uuid.UUID
 	Name       string
 	FoodType   DogdishFoodTypeEnum
-	Preference DogdishPreferenceEnum
+	Preference NullDogdishPreferenceEnum
 }
 
 type DogdishFoodAllergen struct {
-	FoodID     uuid.NullUUID
-	AllergenID uuid.NullUUID
+	FoodID     uuid.UUID
+	AllergenID uuid.UUID
 }
