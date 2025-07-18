@@ -223,6 +223,19 @@ func (q *Queries) GetAllFoodsByEventId(ctx context.Context, eventID uuid.UUID) (
 	return items, nil
 }
 
+const getAllergenByName = `-- name: GetAllergenByName :one
+
+SELECT id FROM dogdish.allergen WHERE name=$1 LIMIT 1
+`
+
+// Selects
+func (q *Queries) GetAllergenByName(ctx context.Context, name string) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getAllergenByName, name)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const insertAllergen = `-- name: InsertAllergen :one
 INSERT INTO dogdish.allergen (name) VALUES ($1) RETURNING id
 `
@@ -235,9 +248,11 @@ func (q *Queries) InsertAllergen(ctx context.Context, name string) (uuid.UUID, e
 }
 
 const insertCuisine = `-- name: InsertCuisine :one
+
 INSERT INTO dogdish.cuisine (name) VALUES ($1) RETURNING id
 `
 
+// Inserts
 func (q *Queries) InsertCuisine(ctx context.Context, name string) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, insertCuisine, name)
 	var id uuid.UUID
@@ -270,7 +285,7 @@ type InsertFoodParams struct {
 	EventID    uuid.UUID
 	Name       string
 	FoodType   DogdishFoodTypeEnum
-	Preference DogdishPreferenceEnum
+	Preference NullDogdishPreferenceEnum
 }
 
 func (q *Queries) InsertFood(ctx context.Context, arg InsertFoodParams) (uuid.UUID, error) {
@@ -291,8 +306,8 @@ INSERT INTO dogdish.food_allergen (food_id, allergen_id) VALUES ($1, $2) RETURNI
 `
 
 type InsertFoodAllergenParams struct {
-	FoodID     uuid.NullUUID
-	AllergenID uuid.NullUUID
+	FoodID     uuid.UUID
+	AllergenID uuid.UUID
 }
 
 func (q *Queries) InsertFoodAllergen(ctx context.Context, arg InsertFoodAllergenParams) (interface{}, error) {

@@ -22,7 +22,7 @@ CREATE TABLE dogdish.food (
   event_id UUID NOT NULL,
   name VARCHAR(255) NOT NULL,
   food_type dogdish.food_type_enum NOT NULL,
-  preference dogdish.preference_enum NOT NULL,
+  preference dogdish.preference_enum NULL,
 
   CONSTRAINT fk_cuisine_id
     FOREIGN KEY (cuisine_id)
@@ -35,8 +35,8 @@ CREATE TABLE dogdish.food (
     ON DELETE CASCADE
 );
 CREATE TABLE dogdish.food_allergen (
-  food_id UUID, 
-  allergen_id UUID,
+  food_id UUID NOT NULL, 
+  allergen_id UUID NOT NULL,
 
   CONSTRAINT fk_food_id
     FOREIGN KEY (food_id)

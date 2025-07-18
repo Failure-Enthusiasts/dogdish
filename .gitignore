@@ -1,5 +1,6 @@
 ##### Generic Ignores #####
 .env*
+env*
 .venv
 
 ##### Project Specific Ignores #####
@@ -179,3 +180,7 @@ pyrightconfig.json
 
 # MacOS
 .DS_Store
+
+
+### database handler ###
+tmp/

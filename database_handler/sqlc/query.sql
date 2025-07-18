@@ -1,3 +1,5 @@
+-- Inserts
+
 -- name: InsertCuisine :one
 INSERT INTO dogdish.cuisine (name) VALUES ($1) RETURNING id;
 
@@ -12,6 +14,11 @@ INSERT INTO dogdish.food (cuisine_id, event_id, name, food_type, preference) VAL
 
 -- name: InsertFoodAllergen :one
 INSERT INTO dogdish.food_allergen (food_id, allergen_id) VALUES ($1, $2) RETURNING (food_id, allergen_id);
+
+-- Selects
+
+-- name: GetAllergenByName :one
+SELECT id FROM dogdish.allergen WHERE name=$1 LIMIT 1;
 
 --
 
