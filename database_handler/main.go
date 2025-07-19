@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -43,8 +44,211 @@ type ErrorResponse struct {
 }
 
 type FieldError struct {
-	Field   string `json:"field"`
-	Message string `json:"message"`
+	Location string `json:"location"`
+	Field    string `json:"field"`
+	Message  string `json:"message"`
+}
+
+func validateStruct(v *validator.Validate, data any, location string) []FieldError {
+	err := v.Struct(data)
+	if err != nil {
+		var fieldErrors []FieldError
+		for _, err := range err.(validator.ValidationErrors) {
+			fieldErrors = append(fieldErrors, FieldError{
+				Location: location,
+				Field:    err.Field(),
+				Message:  err.Tag(),
+			})
+		}
+		return fieldErrors
+	}
+	return nil
+}
+
+func validateEvent(event Event) []FieldError {
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	// Validate event's root level fields
+	eventErrors := validateStruct(validate, event, "Event")
+	if eventErrors != nil {
+		return eventErrors
+	}
+
+	// Validate event entress and sides
+	for ix, entree := range event.EntreesAndSides {
+		fmt.Printf("Validating Entree and Sides: %v\n", entree)
+		entreeErrors := validateStruct(validate, entree, fmt.Sprintf("Entree [%d]", ix))
+		if entreeErrors != nil {
+			return entreeErrors
+		}
+	}
+
+	// Validate salad bar
+	saladBarErrors := validateStruct(validate, event.SaladBar, "Salad Bar")
+	fmt.Printf("Validating Salad Dressing: %v\n", event.SaladBar)
+	if saladBarErrors != nil {
+		return saladBarErrors
+	}
+
+	// Validate salad bar toppings
+	for ix, topping := range event.SaladBar.Toppings {
+		fmt.Printf("Validating Topping: %v\n", topping)
+		toppingsErrors := validateStruct(validate, topping, fmt.Sprintf("Salad Bar - Topping [%d]", ix))
+		if toppingsErrors != nil {
+			return toppingsErrors
+		}
+	}
+
+	// Validate salad bar dressings
+	for ix, dressing := range event.SaladBar.Dressings {
+		fmt.Printf("Validating Dressing: %v\n", dressing)
+		dressingsErrors := validateStruct(validate, dressing, fmt.Sprintf("Salad Bar - Dressing [%d]", ix))
+		if dressingsErrors != nil {
+			return dressingsErrors
+		}
+	}
+
+	// Handle
+	_, err := time.Parse(time.DateOnly, event.ISODate)
+	if err != nil {
+		return []FieldError{
+			{
+				Field:   "ISODate",
+				Message: "Failed to parse",
+			},
+		}
+	}
+
+	return nil
+}
+
+func storeEvent(c context.Context, db *sql.DB, event Event) (uuid.UUID, error) {
+	// Ignoring error since this was already validated in validateEvent
+	isoDate, _ := time.Parse(time.DateOnly, event.ISODate)
+
+	queries := storage.New(db)
+	tx, err := db.BeginTx(c, nil)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to begin transaction: %q", err)
+	}
+
+	// Begin Transaction
+	qtx := queries.WithTx(tx)
+	defer func() {
+		if err != nil {
+			fmt.Printf("\n\n\nError Found: %q\n\n\nRolling Back\n\n\n", err)
+			tx.Rollback()
+		}
+	}()
+
+	// Create Event
+	newEventID, err := qtx.InsertEvent(c, storage.InsertEventParams{
+		Date:    event.Weekday,
+		IsoDate: isoDate,
+	})
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to insert event into database: %q", err)
+	}
+
+	// Create Cuisine
+	newCuisineID, err := qtx.InsertCuisine(c, event.Cuisine)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to insert cuisine into database: %q", err)
+	}
+
+	// Store Entree
+	for _, entree := range event.EntreesAndSides {
+		fmt.Printf("inserting entree: %+v\n", entree)
+		_, err := storeFood(c, qtx, queries, entree, newEventID, newCuisineID)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("failed to insert entree into database: %q", err)
+		}
+	}
+
+	// Store salad bar toppings
+	for _, toppings := range event.SaladBar.Toppings {
+		fmt.Printf("inserting topping: %+v\n", toppings)
+		_, err := storeFood(c, qtx, queries, toppings, newEventID, newCuisineID)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("failed to insert topping into database: %q", err)
+		}
+	}
+
+	// Store salad bar dressings
+	for _, dressings := range event.SaladBar.Dressings {
+		fmt.Printf("inserting dressing: %+v\n", dressings)
+		_, err := storeFood(c, qtx, queries, dressings, newEventID, newCuisineID)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("failed to insert dressing into database: %q", err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return uuid.Nil, fmt.Errorf("failed to commit transaction: %q", err)
+	}
+
+	return newEventID, nil
+}
+
+func storeFood(c context.Context, qtx, q *storage.Queries, food EntreesAndSidesOrSaladBar, eventID, cuisineID uuid.UUID) (uuid.UUID, error) {
+	var preference storage.NullDogdishPreferenceEnum
+	var foodID uuid.UUID
+
+	// Handle preference
+	switch food.Preference {
+	case string(storage.DogdishPreferenceEnumValue0):
+		preference = storage.NullDogdishPreferenceEnum{Valid: false}
+	case string(storage.DogdishPreferenceEnumVegan):
+		preference = storage.NullDogdishPreferenceEnum{
+			DogdishPreferenceEnum: storage.DogdishPreferenceEnumVegan,
+			Valid:                 true,
+		}
+	case string(storage.DogdishPreferenceEnumVegetarian):
+		preference = storage.NullDogdishPreferenceEnum{
+			DogdishPreferenceEnum: storage.DogdishPreferenceEnumVegetarian,
+			Valid:                 true,
+		}
+	default:
+		preference = storage.NullDogdishPreferenceEnum{Valid: false}
+	}
+
+	// Create food
+	foodID, err := qtx.InsertFood(c, storage.InsertFoodParams{
+		CuisineID:  cuisineID,
+		EventID:    eventID,
+		Name:       food.Name,
+		FoodType:   storage.DogdishFoodTypeEnumEntreesAndSides,
+		Preference: preference,
+	})
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to insert food into database: %q", err)
+	}
+
+	// Handle entree and sides allergens
+	for _, allergen := range food.Allergens {
+		// Check to see is the allergen already exist
+		allergenID, err := q.GetAllergenByName(c, allergen)
+
+		// Allergen doesn't exist, add it to the database
+		if err != nil {
+			fmt.Printf("New Allergen detected: %q, adding to database\n", allergen)
+			allergenID, err = q.InsertAllergen(c, allergen)
+			if err != nil {
+				return uuid.Nil, fmt.Errorf("failed to insert allergen: %q", err)
+			}
+		}
+
+		// Create the food allergen join table
+		_, err = qtx.InsertFoodAllergen(c, storage.InsertFoodAllergenParams{
+			FoodID:     foodID,
+			AllergenID: allergenID,
+		})
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("failed to insert food allergen: %q", err.Error())
+		}
+	}
+
+	return foodID, nil
 }
 
 func main() {
@@ -59,9 +263,6 @@ func main() {
 		body := c.Request().Body
 		defer body.Close()
 
-		// Validate Data
-		validate := validator.New(validator.WithRequiredStructEnabled())
-
 		var event Event
 		if err := json.NewDecoder(body).Decode(&event); err != nil {
 			return c.JSON(http.StatusBadRequest, FieldErrorResponse{
@@ -69,304 +270,21 @@ func main() {
 			})
 		}
 
-		err = validate.Struct(event)
-		if err != nil {
-			var fieldErrors []FieldError
-
-			for _, err := range err.(validator.ValidationErrors) {
-				fieldErrors = append(fieldErrors, FieldError{
-					Field:   err.Field(),
-					Message: err.Tag(),
-				})
-			}
+		eventValidationErrors := validateEvent(event)
+		if eventValidationErrors != nil {
 			return c.JSON(http.StatusBadRequest, FieldErrorResponse{
-				Error:      "Invalid data for event",
-				FieldError: fieldErrors,
+				Error:      "Invalid event data",
+				FieldError: eventValidationErrors,
 			})
 		}
 
-		for _, entree := range event.EntreesAndSides {
-			fmt.Printf("Validating Entree and Sides: %v\n", entree)
-			err = validate.Struct(entree)
-			if err != nil {
-				var fieldErrors []FieldError
-
-				for _, err := range err.(validator.ValidationErrors) {
-					fieldErrors = append(fieldErrors, FieldError{
-						Field:   err.Field(),
-						Message: err.Tag(),
-					})
-				}
-				fmt.Printf("Failed to validate the entree: %q\n", fieldErrors)
-				return c.JSON(http.StatusBadRequest, FieldErrorResponse{
-					Error:      "Invalid data for entree_and_sides",
-					FieldError: fieldErrors,
-				})
-			}
-		}
-
-		isoDate, err := time.Parse(time.DateOnly, event.ISODate)
+		newEventID, err := storeEvent(c.Request().Context(), db, event)
 		if err != nil {
-			fmt.Printf("Error: %q\n", err.Error())
-			return c.JSON(http.StatusBadRequest, FieldErrorResponse{
-				Error: "Invalid date format for iso_date",
-				FieldError: []FieldError{
-					{
-						Field:   "ISODate",
-						Message: "Failed to parse",
-					},
-				},
-			})
-		}
-		fmt.Printf("Date Time: %q\n", isoDate.Format(time.DateOnly))
-
-		// Database
-		queries := storage.New(db)
-		tx, err := db.BeginTx(c.Request().Context(), nil)
-		if err != nil {
-			fmt.Printf("Failed to begin transaction: %q", err)
 			return c.JSON(http.StatusInternalServerError, ErrorResponse{
-				Error: "Failed to create event",
+				Error: err.Error(),
 			})
 		}
 
-		// Begin Transaction
-		qtx := queries.WithTx(tx)
-		defer func() {
-			if err != nil {
-				fmt.Printf("\n\n\nError Found: %q\n\n\nRolling Back\n\n\n", err)
-				tx.Rollback()
-			}
-		}()
-
-		// Create Event
-		newEventID, err := qtx.InsertEvent(c.Request().Context(), storage.InsertEventParams{
-			Date:    event.Weekday,
-			IsoDate: isoDate,
-		})
-		if err != nil {
-			fmt.Printf("Failed to insert event into database: %q", err.Error())
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{
-				Error: "Failed to create event",
-			})
-		}
-
-		// Create Cuisine
-		newCuisineID, err := qtx.InsertCuisine(c.Request().Context(), event.Cuisine)
-		if err != nil {
-			fmt.Printf("Failed to insert cuisine into database: %q", err.Error())
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{
-				Error: "Failed to create cuisine",
-			})
-		}
-
-		// Handle Entree
-		var entreePreference storage.NullDogdishPreferenceEnum
-		var foodID uuid.UUID
-		for _, entree := range event.EntreesAndSides {
-			switch entree.Preference {
-			case string(storage.DogdishPreferenceEnumValue0):
-				entreePreference = storage.NullDogdishPreferenceEnum{Valid: false}
-			case string(storage.DogdishPreferenceEnumVegan):
-				entreePreference = storage.NullDogdishPreferenceEnum{
-					DogdishPreferenceEnum: storage.DogdishPreferenceEnumVegan,
-					Valid:                 true,
-				}
-			case string(storage.DogdishPreferenceEnumVegetarian):
-				entreePreference = storage.NullDogdishPreferenceEnum{
-					DogdishPreferenceEnum: storage.DogdishPreferenceEnumVegetarian,
-					Valid:                 true,
-				}
-			default:
-				entreePreference = storage.NullDogdishPreferenceEnum{Valid: false}
-			}
-
-			// Create food
-			foodID, err = qtx.InsertFood(c.Request().Context(), storage.InsertFoodParams{
-				CuisineID:  newCuisineID,
-				EventID:    newEventID,
-				Name:       entree.Name,
-				FoodType:   storage.DogdishFoodTypeEnumEntreesAndSides,
-				Preference: entreePreference,
-			})
-			if err != nil {
-				fmt.Printf("Failed to insert food into database: %q", err.Error())
-				return c.JSON(http.StatusInternalServerError, ErrorResponse{
-					Error: "Failed to create food",
-				})
-			}
-
-			// Handle entree_and_sides allergens
-			for _, allergen := range entree.Allergens {
-				// Check to see is the allergen already exist
-				allergenID, err := queries.GetAllergenByName(c.Request().Context(), allergen)
-
-				// Allergen doesn't exist, add it to the database
-				if err != nil {
-					fmt.Printf("New Allergen detected: %q, adding to database\n", allergen)
-					allergenID, err = queries.InsertAllergen(c.Request().Context(), allergen)
-					if err != nil {
-						fmt.Printf("Failed to insert allergen: %q", err.Error())
-						return c.JSON(http.StatusInternalServerError, ErrorResponse{
-							Error: "Failed to create food",
-						})
-					}
-				}
-
-				// Create the food allergen join table
-				_, err = qtx.InsertFoodAllergen(c.Request().Context(), storage.InsertFoodAllergenParams{
-					FoodID:     foodID,
-					AllergenID: allergenID,
-				})
-				if err != nil {
-					fmt.Printf("Failed to insert food allergen: %q", err.Error())
-					return c.JSON(http.StatusInternalServerError, ErrorResponse{
-						Error: "Failed to create food",
-					})
-				}
-			}
-
-		}
-
-		// Handle SaladBar Toppings
-		var toppingPreference storage.NullDogdishPreferenceEnum
-		for _, toppings := range event.SaladBar.Toppings {
-			switch toppings.Preference {
-			case string(storage.DogdishPreferenceEnumValue0):
-				toppingPreference = storage.NullDogdishPreferenceEnum{Valid: false}
-			case string(storage.DogdishPreferenceEnumVegan):
-				toppingPreference = storage.NullDogdishPreferenceEnum{
-					DogdishPreferenceEnum: storage.DogdishPreferenceEnumVegan,
-					Valid:                 true,
-				}
-			case string(storage.DogdishPreferenceEnumVegetarian):
-				toppingPreference = storage.NullDogdishPreferenceEnum{
-					DogdishPreferenceEnum: storage.DogdishPreferenceEnumVegetarian,
-					Valid:                 true,
-				}
-			default:
-				toppingPreference = storage.NullDogdishPreferenceEnum{Valid: false}
-			}
-
-			// Create food
-			foodID, err = qtx.InsertFood(c.Request().Context(), storage.InsertFoodParams{
-				CuisineID:  newCuisineID,
-				EventID:    newEventID,
-				Name:       toppings.Name,
-				FoodType:   storage.DogdishFoodTypeEnumEntreesAndSides,
-				Preference: toppingPreference,
-			})
-			if err != nil {
-				fmt.Printf("Failed to insert food into database: %q", err.Error())
-				return c.JSON(http.StatusInternalServerError, ErrorResponse{
-					Error: "Failed to create food",
-				})
-			}
-
-			// Handle Allergens
-			for _, allergen := range toppings.Allergens {
-				// Check to see is the allergen already exist
-				allergenID, err := queries.GetAllergenByName(c.Request().Context(), allergen)
-
-				// Allergen doesn't exist, add it to the database
-				if err != nil {
-					fmt.Printf("New Allergen detected: %q, adding to database\n", allergen)
-					allergenID, err = queries.InsertAllergen(c.Request().Context(), allergen)
-					if err != nil {
-						fmt.Printf("Failed to insert allergen: %q", err.Error())
-						return c.JSON(http.StatusInternalServerError, ErrorResponse{
-							Error: "Failed to create food",
-						})
-					}
-				}
-
-				// Create the food allergen join table
-				_, err = qtx.InsertFoodAllergen(c.Request().Context(), storage.InsertFoodAllergenParams{
-					FoodID:     foodID,
-					AllergenID: allergenID,
-				})
-				if err != nil {
-					fmt.Printf("Failed to insert food allergen: %q", err.Error())
-					return c.JSON(http.StatusInternalServerError, ErrorResponse{
-						Error: "Failed to create food",
-					})
-				}
-			}
-		}
-
-		// Handle SaladBar Dressings
-		var dressingsPreference storage.NullDogdishPreferenceEnum
-		for _, dressings := range event.SaladBar.Dressings {
-
-			// Handle Preference
-			switch dressings.Preference {
-			case string(storage.DogdishPreferenceEnumValue0):
-				dressingsPreference = storage.NullDogdishPreferenceEnum{Valid: false}
-			case string(storage.DogdishPreferenceEnumVegan):
-				dressingsPreference = storage.NullDogdishPreferenceEnum{
-					DogdishPreferenceEnum: storage.DogdishPreferenceEnumVegan,
-					Valid:                 true,
-				}
-			case string(storage.DogdishPreferenceEnumVegetarian):
-				dressingsPreference = storage.NullDogdishPreferenceEnum{
-					DogdishPreferenceEnum: storage.DogdishPreferenceEnumVegetarian,
-					Valid:                 true,
-				}
-			default:
-				dressingsPreference = storage.NullDogdishPreferenceEnum{Valid: false}
-			}
-
-			// Create food
-			foodID, err = qtx.InsertFood(c.Request().Context(), storage.InsertFoodParams{
-				CuisineID:  newCuisineID,
-				EventID:    newEventID,
-				Name:       dressings.Name,
-				FoodType:   storage.DogdishFoodTypeEnumEntreesAndSides,
-				Preference: dressingsPreference,
-			})
-			if err != nil {
-				fmt.Printf("Failed to insert food into database: %q", err.Error())
-				return c.JSON(http.StatusInternalServerError, ErrorResponse{
-					Error: "Failed to create food",
-				})
-			}
-
-			// Handle Allergens
-			for _, allergen := range dressings.Allergens {
-				// Check to see is the allergen already exist
-				allergenID, err := queries.GetAllergenByName(c.Request().Context(), allergen)
-
-				// Allergen doesn't exist, add it to the database
-				if err != nil {
-					fmt.Printf("New Allergen detected: %q, adding to database\n", allergen)
-					allergenID, err = queries.InsertAllergen(c.Request().Context(), allergen)
-					if err != nil {
-						fmt.Printf("Failed to insert allergen: %q", err.Error())
-						return c.JSON(http.StatusInternalServerError, ErrorResponse{
-							Error: "Failed to create food",
-						})
-					}
-				}
-
-				_, err = qtx.InsertFoodAllergen(c.Request().Context(), storage.InsertFoodAllergenParams{
-					FoodID:     foodID,
-					AllergenID: allergenID,
-				})
-				if err != nil {
-					fmt.Printf("Failed to insert food allergen: %q", err.Error())
-					return c.JSON(http.StatusInternalServerError, ErrorResponse{
-						Error: "Failed to create food",
-					})
-				}
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			fmt.Printf("Failed to commit transaction: %q", err.Error())
-			return c.JSON(http.StatusInternalServerError, ErrorResponse{
-				Error: "Failed to create food",
-			})
-		}
 		return c.JSON(http.StatusOK, map[string]uuid.UUID{
 			"event_id": newEventID,
 		})
