@@ -5,6 +5,6 @@ sql:
     schema: "schema.sql"
     gen:
       go:
-        package: "storage"
-        out: "../internal/storage"
+        package: "postgres"
+        out: "../internal/data/postgres"
         sql_package: "database/sql"
