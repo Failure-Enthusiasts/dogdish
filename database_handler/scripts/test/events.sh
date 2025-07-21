@@ -2,7 +2,7 @@
 
 echo "Testing POST /events endpoint with comprehensive data..."
 
-curl -X POST http://localhost:1323/events \
+curl -X POST http://localhost:1313/events \
   -H "Content-Type: application/json" \
   -d '{
     "weekday": "Monday",
