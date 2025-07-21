@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Failure-Enthusiasts/cater-me-up/internal/config"
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/internal_types"
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/storage"
 	"github.com/go-playground/validator/v10"
@@ -88,14 +89,15 @@ func validateEvent(event internal_types.Event) []internal_types.FieldError {
 }
 
 func main() {
+	c := config.Load()
 	s := storage.NewStorage().
-		WithPassword("password123").
-		WithUser("app").
-		WithDatabase("dogdish")
+		WithPassword(c.DatabasePassword).
+		WithUser(c.DatabaseUser).
+		WithDatabase(c.DatabaseName)
 
 	e := echo.New()
 	e.POST("/events", createEvent(s))
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", c.Port)))
 }
 
 func createEvent(storage *storage.Storage) echo.HandlerFunc {
