@@ -96,7 +96,7 @@ func main() {
 		WithDatabase(c.DatabaseName)
 
 	e := echo.New()
-	e.POST("/events", createEvent(s))
+	e.POST("/event", createEvent(s))
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", c.Port)))
 }
 
