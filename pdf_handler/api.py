@@ -1,5 +1,6 @@
 from typing import Annotated
 import os
+import sys
 
 import httpx
 from fastapi import FastAPI, File, Request
@@ -19,6 +20,11 @@ app = FastAPI(
 
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+DATABASE_HANDLER_HOST = os.environ.get("PH_DH_HOST")
+
+if GEMINI_API_KEY is None or DATABASE_HANDLER_HOST is None:
+    print("Error: Required environment variables GEMINI_API_KEY or PH_DH_HOST are not set.")
+    sys.exit(1)
 
 class Item(BaseModel):
     name: str
@@ -110,8 +116,18 @@ def save_event(
     request: Request,
     event: Event
 ):
-    e = event.model_dump()
-    print(f"Saving event: {e}\n")
+    if DATABASE_HANDLER_HOST is None:
+        err = "No database handler defined"
+        logger.error(err)
+        return JSONResponse(status_code=400, content={"error": err})
 
-    r = httpx.post('http://localhost:1313/event', json=e)
-    print(f"Response: {r.content}")
+    json_event = event.model_dump()
+
+    response = httpx.post(f"{DATABASE_HANDLER_HOST}/event", json=json_event)
+    if response.status_code == 200:
+        msg = "event successfully stored"
+        event_id = response.json()["event_id"]
+        return JSONResponse(status_code=200, content={"message": msg, "event_id": event_id})
+    else:
+        msg = "failed to store event"
+        return JSONResponse(status_code=500, content={"message": msg, "detail": response.json()})
