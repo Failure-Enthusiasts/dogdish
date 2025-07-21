@@ -1,6 +1,5 @@
 ##### Generic Ignores #####
 .env*
-env*
 .venv
 
 ##### Project Specific Ignores #####

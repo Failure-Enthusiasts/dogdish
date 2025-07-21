@@ -1,6 +1,7 @@
 from typing import Annotated
 import os
 
+import httpx
 from fastapi import FastAPI, File, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
@@ -103,3 +104,14 @@ def process_pdf(
     content = events.model_dump()
     logger.info("PDF processed successfully", extra={"pdf_data": content, "client_ip": request.client.host})
     return JSONResponse(status_code=200, content=content)
+
+@app.post("/api/v1/save_event", name="Save Event")
+def save_event(
+    request: Request,
+    event: Event
+):
+    e = event.model_dump()
+    print(f"Saving event: {e}\n")
+
+    r = httpx.post('http://localhost:1313/event', json=e)
+    print(f"Response: {r.content}")
