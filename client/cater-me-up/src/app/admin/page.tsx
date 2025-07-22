@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth, useUser, SignOutButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { handleApiResponse, retryAsync } from '@/utils/errorUtils';
@@ -22,6 +23,8 @@ function AdminDashboardContent() {
   const [menuData, setMenuData] = useState<MenuData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
   const { error, isError, clearError, handleAsyncError } = useErrorHandler();
 
   const fetchMenuData = async () => {
@@ -40,24 +43,33 @@ function AdminDashboardContent() {
   };
 
   useEffect(() => {
-    // Check if the user is authenticated (client-side protection)
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    // Wait for Clerk to load
+    if (!isLoaded) return;
     
-    if (!isAuthenticated) {
+    // If user is not signed in, redirect to login
+    if (!isSignedIn) {
       router.push('/admin/login');
       return;
     }
     
     loadMenuData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
+  }, [isLoaded, isSignedIn, router]);
 
-  const handleLogout = () => {
-    // Clear authentication state
-    localStorage.removeItem('isAuthenticated');
-    // Redirect to login page
-    router.push('/admin/login');
-  };
+  // Show loading while Clerk is loading
+  if (!isLoaded) {
+    return <LoadingSpinner fullScreen message="Loading authentication..." />;
+  }
+
+  // Redirect if not signed in (this should be handled by middleware, but just in case)
+  if (!isSignedIn) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <LoadingSpinner fullScreen message="Loading admin dashboard..." />;
@@ -85,17 +97,21 @@ function AdminDashboardContent() {
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white shadow">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <div className="flex space-x-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+              {user && (
+                <p className="text-sm text-gray-600">Welcome, {user.emailAddresses[0]?.emailAddress}</p>
+              )}
+            </div>
+            <div className="flex space-x-4 items-center">
               <Link href="/" className="text-gray-600 hover:text-gray-900">
                 View Site
               </Link>
-              <button 
-                onClick={handleLogout}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                Logout
-              </button>
+              <SignOutButton>
+                <button className="text-gray-600 hover:text-gray-900">
+                  Sign Out
+                </button>
+              </SignOutButton>
             </div>
           </div>
         </header>

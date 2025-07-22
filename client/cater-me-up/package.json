@@ -11,6 +11,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.25.4",
     "@datadog/browser-rum": "^6.6.3",
     "@datadog/browser-rum-react": "^6.6.3",
     "lucide-react": "^0.483.0",

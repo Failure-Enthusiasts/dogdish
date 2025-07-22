@@ -320,7 +320,7 @@ const MenuRendererContent = () => {
   );
 };
 
-// Wrap with error boundary for comprehensive error handling
+// Wrap with error boundary for error handling
 const MenuRenderer = () => {
   return (
     <ErrorBoundary>
