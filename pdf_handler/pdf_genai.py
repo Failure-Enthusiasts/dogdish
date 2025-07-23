@@ -5,7 +5,7 @@ from ddtrace.trace import tracer
 from logger import logger
 
 class PDFGenAI:
-  @tracer.wrap(service="pdfgenai", name="init")
+  @tracer.wrap(resource="pdfgenai", name="init")
   def __init__(self,api_key: str, model:str = "gemini-2.0-flash"):
     logger.debug("Initializing PDFGenAI")
 
@@ -149,7 +149,7 @@ class PDFGenAI:
     logger.info("PDFGenAI initialized")
     logger.debug("PDFGenAI configuration", extra={"model": self.model, "system_prompt": self.system_prompt})
 
-  @tracer.wrap(service="pdfgenai", name="extract_pdf")
+  @tracer.wrap(resource="pdfgenai", name="extract_pdf")
   def extract_pdf(self, file_bytes: bytes):
     logger.debug("Extracting PDF", extra={"model": self.model, "system_prompt": self.system_prompt})
 

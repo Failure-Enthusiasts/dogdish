@@ -1,4 +1,4 @@
-# cater_me_up
+# DogDish
 
 ## Home page mockup
 
