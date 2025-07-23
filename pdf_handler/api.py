@@ -7,6 +7,7 @@ from fastapi import FastAPI, File, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
 
+
 from pdf_genai import PDFGenAI
 from logger import logger
 
@@ -48,7 +49,7 @@ class Events(BaseModel):
     events: list[Event]
 
 
-@app.get("/", name="Health Check")
+@app.get("/health", name="Health Check")
 def health_check(request: Request):
     logger.info("Health check", extra={"version": app.version, "client_ip": request.client.host})
     return JSONResponse(status_code=200, content={"version": app.version})
@@ -118,16 +119,20 @@ def save_event(
 ):
     if DATABASE_HANDLER_HOST is None:
         err = "No database handler defined"
-        logger.error(err)
+        logger.error(err, extra={"client_ip": request.client.host})
         return JSONResponse(status_code=400, content={"error": err})
 
     json_event = event.model_dump()
+    logger.debug("json data received", extra={"client_ip": request.client.host, "data": json_event})
 
+    logger.debug(f"submitting data to database handler at {DATABASE_HANDLER_HOST}/event", extra={"client_ip": request.client.host})
     response = httpx.post(f"{DATABASE_HANDLER_HOST}/event", json=json_event)
     if response.status_code == 200:
         msg = "event successfully stored"
         event_id = response.json()["event_id"]
+        logger.info(msg, extra={"client_ip": request.client.host, "event_id": event_id})
         return JSONResponse(status_code=200, content={"message": msg, "event_id": event_id})
     else:
         msg = "failed to store event"
+        logger.error(msg, extra={"client_ip": request.client.host, "detail": response.json()})
         return JSONResponse(status_code=500, content={"message": msg, "detail": response.json()})

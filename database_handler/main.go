@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
+	echotrace "github.com/DataDog/dd-trace-go/contrib/labstack/echo.v4/v2"
+	"github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/config"
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/internal_types"
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/storage"
@@ -13,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
+	log "github.com/sirupsen/logrus"
 )
 
 func validateStruct(v *validator.Validate, data any, location string) []internal_types.FieldError {
@@ -88,7 +92,24 @@ func validateEvent(event internal_types.Event) []internal_types.FieldError {
 	return nil
 }
 
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	// TODO: Add logic to log to stdout based on environment variable
+	// log.SetOutput(os.Stdout)
+	file, err := os.OpenFile("logs/database_handler.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err == nil {
+		log.SetOutput(file)
+	} else {
+		log.Info("Failed to log to file, using default stderr")
+	}
+	// TODO: Add logic to set the log level based on environment variable
+	log.SetLevel(log.InfoLevel)
+}
+
 func main() {
+	tracer.Start()
+	defer tracer.Stop()
+
 	c := config.Load()
 	s := storage.NewStorage().
 		WithPassword(c.DatabasePassword).
@@ -96,8 +117,20 @@ func main() {
 		WithDatabase(c.DatabaseName)
 
 	e := echo.New()
+	e.Use(echotrace.Middleware())
+
 	e.POST("/event", createEvent(s))
+	e.GET("/health", healthCheck())
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", c.Port)))
+}
+
+func healthCheck() echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		log.WithFields(log.Fields{"client_ip": ctx.RealIP()}).Info("health check hit")
+		return ctx.JSON(http.StatusOK, map[string]string{
+			"version": "0.0.1",
+		})
+	}
 }
 
 func createEvent(storage *storage.Storage) echo.HandlerFunc {

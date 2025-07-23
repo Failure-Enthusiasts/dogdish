@@ -1,4 +1,4 @@
-# cater_me_up
+# DogDish
 
 To start the Postgres instance using docker copy the `example.env` file and name it `.env` and fill out the environment  
 variables.
