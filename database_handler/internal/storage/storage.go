@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	sqltrace "github.com/DataDog/dd-trace-go/contrib/database/sql/v2"
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/internal_types"
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/storage/postgres"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type DBType string
@@ -105,7 +107,9 @@ func (s *Storage) GetDBConnection() (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	dbConnection, err := sql.Open(string(s.dbType), connectionString)
+	sqltrace.Register("postgres", &pq.Driver{}, sqltrace.WithService("database"))
+
+	dbConnection, err := sqltrace.Open(string(s.dbType), connectionString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to form a connection with the database: %q", err)
 	}
