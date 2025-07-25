@@ -17,6 +17,7 @@ type Config struct {
 	DatabasePassword string
 	DatabasePort     uint
 	DatabaseName     string
+	Version          string
 }
 
 func Load() *Config {
@@ -27,6 +28,7 @@ func Load() *Config {
 		DatabasePassword: getEnvOrDefault(fmt.Sprintf("%s_DB_PASS", EnvPrefix), "password"),
 		DatabasePort:     getEnvAsUintOrDefault(fmt.Sprintf("%s_DB_PORT", EnvPrefix), 5432),
 		DatabaseName:     getEnvOrDefault(fmt.Sprintf("%s_DB_NAME", EnvPrefix), "postgres"),
+		Version:          getEnvOrDefault(fmt.Sprintf("%s_VERSION", EnvPrefix), "0.0.0"),
 	}
 	return config
 }

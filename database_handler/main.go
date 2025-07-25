@@ -96,7 +96,7 @@ func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	// TODO: Add logic to log to stdout based on environment variable
 	// log.SetOutput(os.Stdout)
-	file, err := os.OpenFile("logs/database_handler.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile("./logs/database_handler.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err == nil {
 		log.SetOutput(file)
 	} else {
@@ -120,35 +120,43 @@ func main() {
 	e.Use(echotrace.Middleware())
 
 	e.POST("/event", createEvent(s))
-	e.GET("/health", healthCheck())
+	e.GET("/health", healthCheck(c))
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", c.Port)))
 }
 
-func healthCheck() echo.HandlerFunc {
+func healthCheck(c *config.Config) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		log.WithFields(log.Fields{"client_ip": ctx.RealIP()}).Info("health check hit")
+		log.WithFields(log.Fields{"client_ip": ctx.RealIP(), "version": c.Version}).Info("health check hit")
 		return ctx.JSON(http.StatusOK, map[string]string{
-			"version": "0.0.1",
+			"version": c.Version,
 		})
 	}
 }
 
 func createEvent(storage *storage.Storage) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
+		log.WithFields(log.Fields{"client_ip": ctx.RealIP()}).Info("creating event")
+
 		body := ctx.Request().Body
 		defer body.Close()
 
+		log.WithFields(log.Fields{"client_ip": ctx.RealIP(), "data": body}).Debug("json received")
 		var event internal_types.Event
 		if err := json.NewDecoder(body).Decode(&event); err != nil {
+			err_msg := "failed to decode json"
+			log.WithFields(log.Fields{"client_ip": ctx.RealIP()}).Error(err_msg)
 			return ctx.JSON(http.StatusBadRequest, internal_types.FieldErrorResponse{
-				Error: "Invalid JSON",
+				Error: err_msg,
 			})
 		}
 
 		eventValidationErrors := validateEvent(event)
 		if eventValidationErrors != nil {
+			err_msg := "invalid event data"
+			log.WithFields(log.Fields{"client_ip": ctx.RealIP()}).Error(err_msg)
+
 			return ctx.JSON(http.StatusBadRequest, internal_types.FieldErrorResponse{
-				Error:      "Invalid event data",
+				Error:      err_msg,
 				FieldError: eventValidationErrors,
 			})
 		}
