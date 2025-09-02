@@ -1,0 +1,15 @@
+schema-version: v1
+rulesets:
+  - tsx-react
+  - typescript-best-practices:
+    rules:
+      no-console:
+        ignore:
+          - "**"
+  - typescript-browser-security
+  - typescript-code-style
+  - typescript-common-security
+  - typescript-express
+  - typescript-inclusive
+  - typescript-node-security
+  - github-actions

@@ -1,5 +1,9 @@
 # cater_me_up
 
+## Home page mockup
+
+![image](./visuals/cater_me_up.excalidraw.png)
+
 To start the Postgres instance using docker copy the `example.env` file and name it `.env` and fill out the environment  
 variables.
 
