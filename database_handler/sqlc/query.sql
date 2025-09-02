@@ -15,6 +15,32 @@ INSERT INTO dogdish.food (cuisine_id, event_id, name, food_type, preference) VAL
 -- name: InsertFoodAllergen :one
 INSERT INTO dogdish.food_allergen (food_id, allergen_id) VALUES ($1, $2) RETURNING (food_id, allergen_id);
 
+-- name: GetFutureEvents :many
+SELECT id, date, iso_date FROM dogdish.event WHERE iso_date > CURRENT_DATE LIMIT $1;
+
+-- name: GetCurrentEvent :one
+SELECT id, date, iso_date FROM dogdish.event WHERE iso_date = CURRENT_DATE LIMIT 1;
+
+-- name: GetPreviousEvent :one
+SELECT id, date, iso_date FROM dogdish.event WHERE iso_date < CURRENT_DATE LIMIT 1;
+
+-- name: GetFoodsByEventId :many
+SELECT 
+    f.name, 
+    f.food_type, 
+    f.preference, 
+    f.cuisine_id,
+    STRING_AGG(a.name, ',') as allergen_names
+FROM dogdish.food f 
+JOIN dogdish.food_allergen fa ON f.id = fa.food_id 
+JOIN dogdish.allergen a ON fa.allergen_id = a.id 
+WHERE event_id = $1
+GROUP BY f.name, f.food_type, f.preference, f.cuisine_id;
+
+
+-- name: GetCuisineById :one
+SELECT id, name FROM dogdish.cuisine WHERE id = $1;
+
 -- Selects
 
 -- name: GetAllergenByName :one

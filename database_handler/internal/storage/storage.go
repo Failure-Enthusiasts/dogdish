@@ -11,6 +11,7 @@ import (
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/storage/postgres"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	log "github.com/sirupsen/logrus"
 )
 
 type DBType string
@@ -176,7 +177,7 @@ func (s *Storage) StoreEvent(ctx context.Context, event internal_types.Event) (u
 		}
 	}()
 
-	storeFood := func(food internal_types.EntreesAndSidesOrSaladBar, eventID, cuisineID uuid.UUID) (uuid.UUID, error) {
+	storeFood := func(food internal_types.EntreesAndSidesOrSaladBar, foodType postgres.DogdishFoodTypeEnum, eventID, cuisineID uuid.UUID) (uuid.UUID, error) {
 		var preference postgres.NullDogdishPreferenceEnum
 		var foodID uuid.UUID
 
@@ -203,7 +204,7 @@ func (s *Storage) StoreEvent(ctx context.Context, event internal_types.Event) (u
 			CuisineID:  cuisineID,
 			EventID:    eventID,
 			Name:       food.Name,
-			FoodType:   postgres.DogdishFoodTypeEnumEntreesAndSides,
+			FoodType:   foodType,
 			Preference: preference,
 		})
 		if err != nil {
@@ -212,7 +213,7 @@ func (s *Storage) StoreEvent(ctx context.Context, event internal_types.Event) (u
 
 		// Handle entree and sides allergens
 		for _, allergen := range food.Allergens {
-			// Check to see is the allergen already exist
+			// Check to see if the allergen already exist
 			allergenID, err := queryExecutor.GetAllergenByName(ctx, allergen)
 
 			// Allergen doesn't exist, add it to the database
@@ -258,7 +259,7 @@ func (s *Storage) StoreEvent(ctx context.Context, event internal_types.Event) (u
 	// Store Entree
 	for _, entree := range event.EntreesAndSides {
 		fmt.Printf("inserting entree: %+v\n", entree)
-		_, err := storeFood(entree, newEventID, newCuisineID)
+		_, err := storeFood(entree, postgres.DogdishFoodTypeEnumEntreesAndSides, newEventID, newCuisineID)
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("failed to insert entree into database: %q", err)
 		}
@@ -267,7 +268,7 @@ func (s *Storage) StoreEvent(ctx context.Context, event internal_types.Event) (u
 	// Store salad bar toppings
 	for _, toppings := range event.SaladBar.Toppings {
 		fmt.Printf("inserting topping: %+v\n", toppings)
-		_, err := storeFood(toppings, newEventID, newCuisineID)
+		_, err := storeFood(toppings, postgres.DogdishFoodTypeEnumToppings, newEventID, newCuisineID)
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("failed to insert topping into database: %q", err)
 		}
@@ -276,7 +277,7 @@ func (s *Storage) StoreEvent(ctx context.Context, event internal_types.Event) (u
 	// Store salad bar dressings
 	for _, dressings := range event.SaladBar.Dressings {
 		fmt.Printf("inserting dressing: %+v\n", dressings)
-		_, err := storeFood(dressings, newEventID, newCuisineID)
+		_, err := storeFood(dressings, postgres.DogdishFoodTypeEnumDressings, newEventID, newCuisineID)
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("failed to insert dressing into database: %q", err)
 		}
@@ -287,4 +288,91 @@ func (s *Storage) StoreEvent(ctx context.Context, event internal_types.Event) (u
 	}
 
 	return newEventID, nil
+}
+
+func (s *Storage) GetFrontPageEventIDs(ctx context.Context) ([]postgres.DogdishEvent, error) {
+	dbConnection, err := s.GetDBConnection()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db connection: %q", err)
+	}
+	defer dbConnection.Close()
+
+	queryExecutor, err := s.GetQueryExecutor(dbConnection)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create a query executor: %q", err)
+	}
+
+	events := make([]postgres.DogdishEvent, 0)
+
+	previousEvent, err := queryExecutor.GetPreviousEvent(ctx)
+	if err != nil {
+		log.Info("no previous event found")
+	} else {
+		events = append(events, previousEvent)
+	}
+
+	currentEvent, err := queryExecutor.GetCurrentEvent(ctx)
+	if err != nil {
+		log.Info("no current event found")
+	} else {
+		events = append(events, currentEvent)
+	}
+
+	var futureEventsNeeded int32
+	if len(events) != 0 {
+		futureEventsNeeded = 2
+	} else {
+		futureEventsNeeded = 1
+	}
+	log.WithFields(log.Fields{"future_events_needed": futureEventsNeeded}).Info("future events needed")
+
+	futureEvents, err := queryExecutor.GetFutureEvents(ctx, futureEventsNeeded)
+	if err != nil {
+		log.Info("no future events found")
+	} else {
+		events = append(events, futureEvents...)
+	}
+	log.WithFields(log.Fields{"events": events}).Info("events found")
+
+	return events, nil
+}
+
+func (s *Storage) GetFoodsByEventId(ctx context.Context, eventID uuid.UUID) ([]postgres.GetFoodsByEventIdRow, error) {
+	dbConnection, err := s.GetDBConnection()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get db connection: %q", err)
+	}
+	defer dbConnection.Close()
+
+	queryExecutor, err := s.GetQueryExecutor(dbConnection)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create a query executor: %q", err)
+	}
+
+	foodsByEventIdRow, err := queryExecutor.GetFoodsByEventId(ctx, eventID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get foods by event id: %q", err)
+	}
+
+	return foodsByEventIdRow, nil
+}
+
+func (s *Storage) GetCuisineById(ctx context.Context, cuisineId uuid.UUID) (postgres.DogdishCuisine, error) {
+	dbConnection, err := s.GetDBConnection()
+	if err != nil {
+		return postgres.DogdishCuisine{}, fmt.Errorf("failed to get db connection: %q", err)
+	}
+	defer dbConnection.Close()
+
+	queryExecutor, err := s.GetQueryExecutor(dbConnection)
+	if err != nil {
+		return postgres.DogdishCuisine{}, fmt.Errorf("failed to create a query executor: %q", err)
+	}
+
+	cuisine, err := queryExecutor.GetCuisineById(ctx, cuisineId)
+	if err != nil {
+		return postgres.DogdishCuisine{}, fmt.Errorf("failed to get cuisine by id: %q", err)
+	}
+
+	return cuisine, nil
 }

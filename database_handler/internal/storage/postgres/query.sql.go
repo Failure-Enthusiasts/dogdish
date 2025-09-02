@@ -236,6 +236,117 @@ func (q *Queries) GetAllergenByName(ctx context.Context, name string) (uuid.UUID
 	return id, err
 }
 
+const getCuisineById = `-- name: GetCuisineById :one
+SELECT id, name FROM dogdish.cuisine WHERE id = $1
+`
+
+func (q *Queries) GetCuisineById(ctx context.Context, id uuid.UUID) (DogdishCuisine, error) {
+	row := q.db.QueryRowContext(ctx, getCuisineById, id)
+	var i DogdishCuisine
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}
+
+const getCurrentEvent = `-- name: GetCurrentEvent :one
+SELECT id, date, iso_date FROM dogdish.event WHERE iso_date = CURRENT_DATE LIMIT 1
+`
+
+func (q *Queries) GetCurrentEvent(ctx context.Context) (DogdishEvent, error) {
+	row := q.db.QueryRowContext(ctx, getCurrentEvent)
+	var i DogdishEvent
+	err := row.Scan(&i.ID, &i.Date, &i.IsoDate)
+	return i, err
+}
+
+const getFoodsByEventId = `-- name: GetFoodsByEventId :many
+SELECT 
+    f.name, 
+    f.food_type, 
+    f.preference, 
+    f.cuisine_id,
+    STRING_AGG(a.name, ',') as allergen_names
+FROM dogdish.food f 
+JOIN dogdish.food_allergen fa ON f.id = fa.food_id 
+JOIN dogdish.allergen a ON fa.allergen_id = a.id 
+WHERE event_id = $1
+GROUP BY f.name, f.food_type, f.preference, f.cuisine_id
+`
+
+type GetFoodsByEventIdRow struct {
+	Name          string
+	FoodType      DogdishFoodTypeEnum
+	Preference    NullDogdishPreferenceEnum
+	CuisineID     uuid.UUID
+	AllergenNames []byte
+}
+
+func (q *Queries) GetFoodsByEventId(ctx context.Context, eventID uuid.UUID) ([]GetFoodsByEventIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, getFoodsByEventId, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetFoodsByEventIdRow
+	for rows.Next() {
+		var i GetFoodsByEventIdRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.FoodType,
+			&i.Preference,
+			&i.CuisineID,
+			&i.AllergenNames,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFutureEvents = `-- name: GetFutureEvents :many
+SELECT id, date, iso_date FROM dogdish.event WHERE iso_date > CURRENT_DATE LIMIT $1
+`
+
+func (q *Queries) GetFutureEvents(ctx context.Context, limit int32) ([]DogdishEvent, error) {
+	rows, err := q.db.QueryContext(ctx, getFutureEvents, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DogdishEvent
+	for rows.Next() {
+		var i DogdishEvent
+		if err := rows.Scan(&i.ID, &i.Date, &i.IsoDate); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPreviousEvent = `-- name: GetPreviousEvent :one
+SELECT id, date, iso_date FROM dogdish.event WHERE iso_date < CURRENT_DATE LIMIT 1
+`
+
+func (q *Queries) GetPreviousEvent(ctx context.Context) (DogdishEvent, error) {
+	row := q.db.QueryRowContext(ctx, getPreviousEvent)
+	var i DogdishEvent
+	err := row.Scan(&i.ID, &i.Date, &i.IsoDate)
+	return i, err
+}
+
 const insertAllergen = `-- name: InsertAllergen :one
 INSERT INTO dogdish.allergen (name) VALUES ($1) RETURNING id
 `

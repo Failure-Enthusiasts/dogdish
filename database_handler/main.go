@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	echotrace "github.com/DataDog/dd-trace-go/contrib/labstack/echo.v4/v2"
@@ -12,6 +13,7 @@ import (
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/config"
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/internal_types"
 	"github.com/Failure-Enthusiasts/cater-me-up/internal/storage"
+	"github.com/Failure-Enthusiasts/cater-me-up/internal/storage/postgres"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -121,6 +123,7 @@ func main() {
 
 	e.POST("/event", createEvent(s))
 	e.GET("/health", healthCheck(c))
+	e.GET("/front-page-events", getFrontPageEvents(s))
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", c.Port)))
 }
 
@@ -172,5 +175,106 @@ func createEvent(storage *storage.Storage) echo.HandlerFunc {
 			"event_id": newEventID,
 		})
 	}
+}
 
+type FrontPageEvent struct {
+	Weekday         string                                     `json:"weekday"`
+	ISODate         string                                     `json:"iso_date"`
+	Cuisine         string                                     `json:"cuisine"`
+	EntreesAndSides []internal_types.EntreesAndSidesOrSaladBar `json:"entrees_and_sides"`
+	SaladBar        internal_types.SaladBar                    `json:"salad_bar"`
+}
+
+type GetFrontPageEventsResponse struct {
+	Events []FrontPageEvent `json:"events"`
+}
+
+func getFrontPageEvents(storage *storage.Storage) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		log.WithFields(log.Fields{"client_ip": ctx.RealIP()}).Info("getting events for front page")
+
+		var frontPageEvents []FrontPageEvent
+
+		eventIDs, err := storage.GetFrontPageEventIDs(ctx.Request().Context())
+		if err != nil {
+			return ctx.JSON(http.StatusInternalServerError, internal_types.ErrorResponse{
+				Error: err.Error(),
+			})
+		}
+
+		for _, event := range eventIDs {
+			log.WithFields(log.Fields{"event_id": event.ID}).Info("event id found")
+			var frontPageEvent FrontPageEvent = FrontPageEvent{
+				Weekday: event.Date,
+				ISODate: event.IsoDate.Format(time.DateOnly),
+			}
+
+			log.WithFields(log.Fields{"event_id": event.ID}).Info("Getting food by event id")
+			eventFoods, err := storage.GetFoodsByEventId(ctx.Request().Context(), event.ID)
+			if err != nil {
+				return ctx.JSON(http.StatusInternalServerError, internal_types.ErrorResponse{
+					Error: err.Error(),
+				})
+			}
+			foodCount := len(eventFoods)
+			log.WithFields(log.Fields{"food_count": foodCount}).Info("Food found")
+
+			if foodCount == 0 {
+				log.Info("No food found")
+				continue
+			}
+
+			cuisine, err := storage.GetCuisineById(ctx.Request().Context(), eventFoods[0].CuisineID)
+			if err != nil {
+				return ctx.JSON(http.StatusInternalServerError, internal_types.ErrorResponse{
+					Error: err.Error(),
+				})
+			}
+			frontPageEvent.Cuisine = cuisine.Name
+
+			for _, eventFood := range eventFoods {
+				log.Info("Checking the event food")
+				log.WithFields(log.Fields{"food": eventFood}).Info("Event Food")
+
+				allergens := strings.Split(string(eventFood.AllergenNames), ",")
+				var preference string
+				if eventFood.Preference.Valid {
+					preference = string(eventFood.Preference.DogdishPreferenceEnum)
+				} else {
+					preference = ""
+				}
+
+				switch eventFood.FoodType {
+				case postgres.DogdishFoodTypeEnumEntreesAndSides:
+					frontPageEvent.EntreesAndSides = append(frontPageEvent.EntreesAndSides, internal_types.EntreesAndSidesOrSaladBar{
+						Name:       eventFood.Name,
+						Allergens:  allergens,
+						Preference: preference,
+					})
+				case postgres.DogdishFoodTypeEnumToppings:
+
+					frontPageEvent.SaladBar.Toppings = append(frontPageEvent.SaladBar.Toppings, internal_types.EntreesAndSidesOrSaladBar{
+						Name:       eventFood.Name,
+						Allergens:  allergens,
+						Preference: preference,
+					})
+				case postgres.DogdishFoodTypeEnumDressings:
+
+					frontPageEvent.SaladBar.Dressings = append(frontPageEvent.SaladBar.Dressings, internal_types.EntreesAndSidesOrSaladBar{
+						Name:       eventFood.Name,
+						Allergens:  allergens,
+						Preference: preference,
+					})
+				default:
+					log.WithFields(log.Fields{"food_type": eventFood.FoodType}).Info("Unknown food type")
+				}
+			}
+			frontPageEvents = append(frontPageEvents, frontPageEvent)
+
+		}
+
+		return ctx.JSON(http.StatusOK, map[string][]FrontPageEvent{
+			"events": frontPageEvents,
+		})
+	}
 }
