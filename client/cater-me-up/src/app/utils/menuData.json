@@ -33,7 +33,7 @@
     },
     {
       "weekday": "friday",
-      "iso_date": "2025-08-25",
+      "iso_date": "2025-09-03",
       "cuisine": "korean",
       "entrees_and_sides": [
         { "name": "Gochujang Roasted Salmon Fillet", "allergens": ["fish", "soy", "gluten", "sesame"], "preferences": [] },
@@ -65,7 +65,7 @@
     },
     {
       "weekday": "monday",
-      "iso_date": "2025-08-30",
+      "iso_date": "2025-09-05",
       "cuisine": "french continental",
       "entrees_and_sides": [
         { "name": "Herb Marinated Grilled Flank Steak", "allergens": [], "preferences": [] },
