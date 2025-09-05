@@ -1,5 +1,5 @@
 ##### Generic Ignores #####
-.env
+.env*
 .venv
 
 ##### Project Specific Ignores #####
@@ -179,8 +179,6 @@ pyrightconfig.json
 
 # MacOS
 .DS_Store
-<<<<<<< HEAD
-=======
 pdf_handler/test-menu1.pdf
 pdf_handler/test-menu2.pdf
 
@@ -227,3 +225,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 >>>>>>> front-end
+
+### database handler ###
+tmp/

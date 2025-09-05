@@ -1,9 +1,12 @@
 from typing import Annotated
 import os
+import sys
 
+import httpx
 from fastapi import FastAPI, File, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
+
 
 from pdf_genai import PDFGenAI
 from logger import logger
@@ -14,16 +17,20 @@ app = FastAPI(
     description="A service for converting PDF files to structured data",
     version="0.0.1",
     docs_url="/docs",
-    redoc_url="/redoc"
 )
 
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+DATABASE_HANDLER_HOST = os.environ.get("PH_DH_HOST")
+
+if GEMINI_API_KEY is None or DATABASE_HANDLER_HOST is None:
+    print("Error: Required environment variables GEMINI_API_KEY or PH_DH_HOST are not set.")
+    sys.exit(1)
 
 class Item(BaseModel):
     name: str
     allergens: list[str]
-    preferences: list[str]
+    preference: str | None
 
 
 class SaladBar(BaseModel):
@@ -42,7 +49,7 @@ class Events(BaseModel):
     events: list[Event]
 
 
-@app.get("/", name="Health Check")
+@app.get("/health", name="Health Check")
 def health_check(request: Request):
     logger.info("Health check", extra={"version": app.version, "client_ip": request.client.host})
     return JSONResponse(status_code=200, content={"version": app.version})
@@ -79,6 +86,8 @@ def process_pdf(
 
     cleaned_res = data.strip("```json").strip("```")
 
+    print(f"The cleaned data was:\n {cleaned_res}")
+
     # Validate the data
     try:
         events = Events.model_validate_json(cleaned_res)
@@ -102,3 +111,28 @@ def process_pdf(
     content = events.model_dump()
     logger.info("PDF processed successfully", extra={"pdf_data": content, "client_ip": request.client.host})
     return JSONResponse(status_code=200, content=content)
+
+@app.post("/api/v1/save_event", name="Save Event")
+def save_event(
+    request: Request,
+    event: Event
+):
+    if DATABASE_HANDLER_HOST is None:
+        err = "No database handler defined"
+        logger.error(err, extra={"client_ip": request.client.host})
+        return JSONResponse(status_code=400, content={"error": err})
+
+    json_event = event.model_dump()
+    logger.debug("json data received", extra={"client_ip": request.client.host, "data": json_event})
+
+    logger.debug(f"submitting data to database handler at {DATABASE_HANDLER_HOST}/event", extra={"client_ip": request.client.host})
+    response = httpx.post(f"{DATABASE_HANDLER_HOST}/event", json=json_event)
+    if response.status_code == 200:
+        msg = "event successfully stored"
+        event_id = response.json()["event_id"]
+        logger.info(msg, extra={"client_ip": request.client.host, "event_id": event_id})
+        return JSONResponse(status_code=200, content={"message": msg, "event_id": event_id})
+    else:
+        msg = "failed to store event"
+        logger.error(msg, extra={"client_ip": request.client.host, "detail": response.json()})
+        return JSONResponse(status_code=500, content={"message": msg, "detail": response.json()})

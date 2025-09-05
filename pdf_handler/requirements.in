@@ -1,5 +1,0 @@
-fastapi[standard]
-pypdf
-google-genai
-python-json-logger
-ddtrace

@@ -1,4 +1,4 @@
-# cater_me_up
+# DogDish
 
 ## Home page mockup
 
@@ -27,4 +27,12 @@ Destroy the database with the docker command below:
 
 ``` bash
 docker compose -f storage/compose.yaml down
+```
+
+### Spin up
+
+#### Database handler
+```
+cd database_handler
+flask --app database_handler run
 ```
