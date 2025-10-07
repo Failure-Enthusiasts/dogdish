@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pdf-handler
+  namespace: production
+  labels:
+    app: pdf-handler
+    version: "0.1.0-rc.0"
+    environment: prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pdf-handler
+      environment: prod
+  template:
+    metadata:
+      labels:
+        app: pdf-handler
+        version: "0.1.0-rc.0"
+        environment: prod
+    spec:
+      containers:
+      - name: pdf-handler
+        image: aldrickdev/pdf_handler:0.1.0-rc.0
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: pdf-handler-config
+              key: LOG_LEVEL
+        - name: LOGGER_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: pdf-handler-config
+              key: LOGGER_TYPE
+        - name: DD_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: pdf-handler-config
+              key: DD_ENV
+        - name: DD_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: pdf-handler-config
+              key: DD_SERVICE
+        - name: DD_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: pdf-handler-config
+              key: DD_VERSION
+        - name: DD_TRACE_AGENT_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: pdf-handler-config
+              key: DD_TRACE_AGENT_ENABLED
+        - name: DD_LOGS_INJECTION
+          valueFrom:
+            configMapKeyRef:
+              name: pdf-handler-config
+              key: DD_LOGS_INJECTION
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: pdf-handler-secrets
+              key: GEMINI_API_KEY
+        - name: PH_DH_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: pdf-handler-config
+              key: PH_DH_HOST
+        - name: PH_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: pdf-handler-config
+              key: PH_PORT
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            # memory: "1Gi"
+            memory: "512Mi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        volumeMounts:
+        - name: apmsocketpath
+          mountPath: /var/run/datadog
+      restartPolicy: Always
+      volumes:
+        - hostPath:
+            path: /var/run/datadog/
+          name: apmsocketpath
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdf-handler-service
+  namespace: production
+  labels:
+    app: pdf-handler
+    environment: prod
+spec:
+  selector:
+    app: pdf-handler
+    environment: prod
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP

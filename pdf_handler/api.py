@@ -12,20 +12,20 @@ from pdf_genai import PDFGenAI
 from logger import logger
 
 
-app = FastAPI(
-    title="PDF Handler",
-    description="A service for converting PDF files to structured data",
-    version="0.0.1",
-    docs_url="/docs",
-)
-
-
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 DATABASE_HANDLER_HOST = os.environ.get("PH_DH_HOST")
+DD_VERSION = os.environ.get("DD_VERSION")
 
 if GEMINI_API_KEY is None or DATABASE_HANDLER_HOST is None:
     print("Error: Required environment variables GEMINI_API_KEY or PH_DH_HOST are not set.")
     sys.exit(1)
+
+app = FastAPI(
+    title="PDF Handler",
+    description="A service for converting PDF files to structured data",
+    version=DD_VERSION,
+    docs_url="/docs",
+)
 
 class Item(BaseModel):
     name: str
@@ -47,6 +47,7 @@ class Event(BaseModel):
 
 class Events(BaseModel):
     events: list[Event]
+
 
 
 @app.get("/health", name="Health Check")

@@ -1,0 +1,28 @@
+# helm repo add datadog https://helm.datadoghq.com
+# helm install datadog-operator datadog/datadog-operator
+
+# https://github.com/DataDog/datadog-operator/blob/main/docs/configuration.v2alpha1.md
+kind: "DatadogAgent"
+apiVersion: "datadoghq.com/v2alpha1"
+metadata:
+  name: datadog
+  namespace: datadog
+spec:
+  global:
+    site: "datadoghq.com"
+    clusterName: "dogdish"
+    logLevel: "DEBUG"
+    credentials:
+      apiSecret:
+        secretName: "datadog-secret"
+        keyName: "api-key"
+    tags:
+      - "env:prod"
+  features:
+    apm:
+      enabled: true
+    logCollection:
+      enabled: true
+      containerCollectAll: true
+    liveProcessCollection:
+      enabled: true

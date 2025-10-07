@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pdf-handler-ingress
+  namespace: production
+  labels:
+    app: pdf-handler
+    environment: prod
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: pdf.dogdish.cc
+      http:
+        paths:
+          - backend:
+              service:
+                name: pdf-handler-service
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
