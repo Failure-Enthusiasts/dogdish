@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdf-handler-config
+  namespace: production
+  labels:
+    app: pdf-handler
+    environment: prod
+data:
+  LOG_LEVEL: "DEBUG"
+  LOGGER_TYPE: "STDOUT"
+  PH_PORT: "8000"
+  PH_DH_HOST: "http://database-handler-service.production.svc.cluster.local:8080"
+  DD_ENV: "production"
+  DD_SERVICE: "pdf-handler"
+  DD_VERSION: "0.1.0-rc.0"
+  DD_TRACE_AGENT_URL: "unix:///var/run/datadog/apm.socket"
+  DD_TRACE_AGENT_ENABLED: "true"
+  DD_LOGS_INJECTION: "true"

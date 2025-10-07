@@ -5,6 +5,8 @@
 ##### Project Specific Ignores #####
 ### pdf_handler ###
 pdf_handler/logs
+pdf_handler/test-menu1.pdf
+pdf_handler/test-menu2.pdf
 
 ##### Language Specific Ignores #####
 ### Python ###
@@ -179,8 +181,6 @@ pyrightconfig.json
 
 # MacOS
 .DS_Store
-pdf_handler/test-menu1.pdf
-pdf_handler/test-menu2.pdf
 
 
 # client
@@ -228,3 +228,6 @@ next-env.d.ts
 
 ### database handler ###
 tmp/
+
+### deployment ###
+secrets.yaml
