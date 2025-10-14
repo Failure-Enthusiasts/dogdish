@@ -6,6 +6,7 @@ import httpx
 from fastapi import FastAPI, File, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
+from fastapi.middleware.cors import CORSMiddleware
 
 
 from pdf_genai import PDFGenAI
@@ -25,6 +26,19 @@ app = FastAPI(
     description="A service for converting PDF files to structured data",
     version=DD_VERSION,
     docs_url="/docs",
+)
+
+origins = [
+    # TODO: make this less permissive
+    "*"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 class Item(BaseModel):
