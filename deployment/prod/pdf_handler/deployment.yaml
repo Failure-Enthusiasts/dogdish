@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: pdf-handler
-        image: aldrickdev/pdf_handler:0.1.0-rc.0
+        image: aldrickdev/pdf-handler:0.1.0-rc.0
         ports:
         - containerPort: 8000
           name: http
@@ -79,8 +79,10 @@ spec:
               key: PH_PORT
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "200m"
+            # memory: "256Mi"
+            # cpu: "200m"
+            memory: "128Mi"
+            cpu: "100m"
           limits:
             # memory: "1Gi"
             memory: "512Mi"
