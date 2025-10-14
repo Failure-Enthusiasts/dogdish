@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  namespace: production
+spec:
+  type: ExternalName
+  externalName: switchyard.proxy.rlwy.net
+  ports:
+  - name: postgresql
+    port: 5432
+    protocol: TCP
