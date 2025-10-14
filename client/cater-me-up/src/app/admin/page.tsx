@@ -1090,7 +1090,7 @@ function AdminDashboardContent() {
               </div>
             </div>
           </div>
-
+          
           {/* PDF Upload Section */}
           <div className="bg-white shadow rounded-lg p-6 mb-6">
             <div className="flex justify-between items-center mb-4">
@@ -1209,48 +1209,48 @@ function AdminDashboardContent() {
                     Add Item
                   </button>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Name
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Preferences
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Allergens
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Preferences
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Allergens
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
                       {selectedEvent.entrees_and_sides.map((item, index) => (
-                        <tr key={index}>
+                    <tr key={index}>
                           <td className="px-6 py-4">
                             <div className="font-medium text-gray-900">{item.name}</div>
-                          </td>
+                      </td>
                           <td className="px-6 py-4">
-                            <div className="flex flex-wrap gap-1">
-                              {item.preferences.map((pref, i) => (
+                        <div className="flex flex-wrap gap-1">
+                          {item.preferences.map((pref, i) => (
                                 <span key={i} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 capitalize">
-                                  {pref}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
+                              {pref}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
                           <td className="px-6 py-4">
-                            <div className="flex flex-wrap gap-1">
-                              {item.allergens.map((allergen, i) => (
+                        <div className="flex flex-wrap gap-1">
+                          {item.allergens.map((allergen, i) => (
                                 <span key={i} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 capitalize">
-                                  {allergen}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
+                              {allergen}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
                           <td className="px-6 py-4 text-right text-sm font-medium">
                             <button 
                               onClick={() => handleEditItem(item, index, 'entree')}
@@ -1264,11 +1264,11 @@ function AdminDashboardContent() {
                             >
                               Delete
                             </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
                 </div>
               </div>
 

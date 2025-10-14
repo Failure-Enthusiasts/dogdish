@@ -181,6 +181,8 @@ pyrightconfig.json
 
 # MacOS
 .DS_Store
+pdf_handler/test-menu1.pdf
+pdf_handler/test-menu2.pdf
 
 
 # client
@@ -188,6 +190,7 @@ pyrightconfig.json
 
 # dependencies
 node_modules
+/client/cater-me-up/node_modules
 .next
 .yarn/*
 !.yarn/patches
@@ -224,10 +227,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
->>>>>>> front-end
-
 ### database handler ###
 tmp/
-
-### deployment ###
-secrets.yaml
