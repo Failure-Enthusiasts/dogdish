@@ -1,33 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { datadogRum } from '@datadog/browser-rum';
-import { reactPlugin } from '@datadog/browser-rum-react';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorDisplay from '@/components/ErrorDisplay';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import menuJson from './utils/menuData.json';
 import { toSlug } from '@/utils/menuHelpers';
-// import Navbar from "../components/Navbar";
-// import Footer from "../components/Footer";
-
-
-datadogRum.init({
-    applicationId: '1819a01a-b7b4-471f-bdca-1e35d3f2bd43',
-    clientToken: 'pub96ac2515546ca98f9fab346453907a4a',
-    site: 'datadoghq.com',
-    service:'dogdish',
-    env: 'dev',
-    version: '0.0.1',
-    sessionSampleRate:  100,
-    sessionReplaySampleRate: 100,
-    defaultPrivacyLevel: 'mask-user-input',
-    plugins: [reactPlugin({ router: true })],
-    trackResources: true,
-    trackLongTasks: true,
-    trackUserInteractions: true,
-});
-
 
 // Add a date formatting function like in prev-events
 function formatEventDate(iso: string) {

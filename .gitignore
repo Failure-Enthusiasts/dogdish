@@ -229,3 +229,6 @@ yarn-error.log*
 next-env.d.ts
 ### database handler ###
 tmp/
+
+### deployment ###
+secrets.yaml
