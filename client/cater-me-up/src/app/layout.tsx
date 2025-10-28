@@ -5,6 +5,7 @@ import "./globals.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ErrorBoundary from "../components/ErrorBoundary";
+import DatadogRUM from "../components/DatadogRUM";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,7 +20,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DogDish",
   description: "See, plan, and understand our catered meals.",
-  themeColor: '#2563eb',
   appleWebApp: {
     capable: true,
     title: 'DogDish',
@@ -49,6 +49,7 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <ErrorBoundary>
+            <DatadogRUM />
             <Navbar />
             {children}
             <Footer />
