@@ -1050,7 +1050,13 @@ function AdminDashboardContent() {
               )}
             </div>
             <div className="flex space-x-4 items-center">
-              <HealthCheck showDetails={false} className="hidden sm:flex" />
+              <HealthCheck 
+                endpoint="https://pdf.dogdish.cc/health"
+                serviceName="PDF Service"
+                serviceUrl="https://pdf.dogdish.cc"
+                showDetails={false} 
+                className="hidden sm:flex" 
+              />
               <Link href="/" className="text-gray-600 hover:text-gray-900">
                 View Site
               </Link>
@@ -1097,35 +1103,19 @@ function AdminDashboardContent() {
           <div className="bg-white shadow rounded-lg p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">System Status</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <HealthCheck />
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center">
-                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900">Admin Panel</h3>
-                    <p className="text-xs text-gray-500">This interface</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Status:</span>
-                    <span className="font-medium text-blue-600">Operational</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Environment:</span>
-                    <span className="font-mono text-gray-900 bg-gray-100 px-2 py-0.5 rounded text-xs">
-                      {process.env.NODE_ENV || 'development'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <HealthCheck 
+                endpoint="https://pdf.dogdish.cc/health"
+                serviceName="PDF Service"
+                serviceUrl="https://pdf.dogdish.cc"
+              />
+              <HealthCheck 
+                endpoint="https://dh.dogdish.cc/health"
+                serviceName="Database Handler"
+                serviceUrl="https://dh.dogdish.cc"
+              />
             </div>
           </div>
-          
+
           {/* PDF Upload Section */}
           <div className="bg-white shadow rounded-lg p-6 mb-6">
             <div className="flex justify-between items-center mb-4">

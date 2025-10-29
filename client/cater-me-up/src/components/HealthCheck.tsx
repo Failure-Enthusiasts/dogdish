@@ -3,15 +3,24 @@ import React from 'react';
 import { useHealthCheck } from '@/hooks/useHealthCheck';
 
 interface HealthCheckProps {
+  endpoint: string;
+  serviceName: string;
+  serviceUrl?: string;
   showDetails?: boolean;
   className?: string;
 }
 
 const HealthCheck: React.FC<HealthCheckProps> = ({ 
+  endpoint,
+  serviceName,
+  serviceUrl,
   showDetails = true, 
   className = '' 
 }) => {
-  const { status, checkHealth, isChecking } = useHealthCheck();
+  const { status, checkHealth, isChecking } = useHealthCheck({ 
+    endpoint, 
+    serviceName 
+  });
 
   const formatLastChecked = (date: Date) => {
     const now = new Date();
@@ -62,7 +71,7 @@ const HealthCheck: React.FC<HealthCheckProps> = ({
         <div className={`w-3 h-3 rounded-full flex items-center justify-center ${getStatusColor()}`}>
           {getStatusIcon()}
         </div>
-        <span className="text-sm text-gray-600">PDF Service</span>
+        <span className="text-sm text-gray-600">{serviceName}</span>
         <span className={`text-xs font-medium ${status.isOnline ? 'text-green-600' : 'text-red-600'}`}>
           {getStatusText()}
         </span>
@@ -78,8 +87,8 @@ const HealthCheck: React.FC<HealthCheckProps> = ({
             {getStatusIcon()}
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">PDF Service Health</h3>
-            <p className="text-xs text-gray-500">https://pdf.dogdish.cc</p>
+            <h3 className="text-sm font-semibold text-gray-900">{serviceName} Health</h3>
+            <p className="text-xs text-gray-500">{serviceUrl || endpoint}</p>
           </div>
         </div>
         <button
