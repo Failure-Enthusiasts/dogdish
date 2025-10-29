@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: database-handler-ingress
+  namespace: production
+  labels:
+    app: database-handler
+    environment: production
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: dh.dogdish.cc
+      http:
+        paths:
+          - backend:
+              service:
+                name: database-handler-service
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix

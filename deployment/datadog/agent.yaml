@@ -17,7 +17,7 @@ spec:
         secretName: "datadog-secret"
         keyName: "api-key"
     tags:
-      - "env:prod"
+      - "env:production"
   features:
     apm:
       enabled: true

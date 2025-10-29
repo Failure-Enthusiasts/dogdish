@@ -1,0 +1,138 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database-handler
+  namespace: production
+  labels:
+    app: database-handler
+    version: 0.1.0-rc.1
+    environment: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: database-handler
+      environment: production
+  template:
+    metadata:
+      labels:
+        app: database-handler
+        version: 0.1.0-rc.1
+        environment: production
+    spec:
+      containers:
+      - name: database-handler
+        image: aldrickdev/database-handler:0.1.0-rc.1
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        - name: DH_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: database-handler-config
+              key: DH_PORT
+        - name: DH_DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: database-handler-config
+              key: DH_DB_HOST
+        - name: DH_DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: database-handler-config
+              key: DH_DB_PORT
+        - name: DH_DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: database-handler-config
+              key: DH_DB_NAME
+        - name: DH_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: database-handler-config
+              key: DH_VERSION
+        - name: DH_DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: PASSWORD
+        - name: DD_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: database-handler-config
+              key: DD_ENV
+        - name: DD_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: database-handler-config
+              key: DD_SERVICE
+        - name: DD_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: database-handler-config
+              key: DD_VERSION
+        - name: DD_TRACE_AGENT_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: database-handler-config
+              key: DD_TRACE_AGENT_ENABLED
+        - name: DD_LOGS_INJECTION
+          valueFrom:
+            configMapKeyRef:
+              name: database-handler-config
+              key: DD_LOGS_INJECTION
+        - name: DD_TRACE_AGENT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: database-handler-config
+              key: DD_TRACE_AGENT_URL
+        resources:
+          requests:
+            # memory: "256Mi"
+            # cpu: "200m"
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            # memory: "1Gi"
+            memory: "512Mi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        volumeMounts:
+        - name: apmsocketpath
+          mountPath: /var/run/datadog
+      restartPolicy: Always
+      volumes:
+        - hostPath:
+            path: /var/run/datadog/
+          name: apmsocketpath
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-handler-service
+  namespace: production
+  labels:
+    app: database-handler
+    environment: production
+spec:
+  selector:
+    app: database-handler
+    environment: production
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  type: ClusterIP
