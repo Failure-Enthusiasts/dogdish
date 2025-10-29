@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-handler-config
+  namespace: production
+  labels:
+    app: database-handler
+    environment: production
+data:
+  DH_PORT: "80"
+  DH_DB_HOST: database
+  DH_DB_PORT: "5432"
+  DH_DB_NAME: dogdish
+  DH_VERSION: 0.1.0-rc.1
+  DD_ENV: production
+  DD_SERVICE: database-handler
+  DD_VERSION: 0.1.0-rc.1
+  DD_TRACE_AGENT_URL: unix:///var/run/datadog/apm.socket
+  DD_TRACE_AGENT_ENABLED: "true"
+  DD_LOGS_INJECTION: "true"

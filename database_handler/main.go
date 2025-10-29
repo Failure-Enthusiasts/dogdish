@@ -17,6 +17,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
@@ -97,13 +98,15 @@ func validateEvent(event internal_types.Event) []internal_types.FieldError {
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	// TODO: Add logic to log to stdout based on environment variable
-	// log.SetOutput(os.Stdout)
-	file, err := os.OpenFile("./logs/database_handler.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err == nil {
-		log.SetOutput(file)
-	} else {
-		log.Info("Failed to log to file, using default stderr")
-	}
+	log.SetOutput(os.Stdout)
+
+	// file, err := os.OpenFile("./logs/database_handler.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	// if err == nil {
+	// 	log.SetOutput(file)
+	// } else {
+	// 	log.Info("Failed to log to file, using default stderr")
+	// }
+
 	// TODO: Add logic to set the log level based on environment variable
 	log.SetLevel(log.InfoLevel)
 }
@@ -120,6 +123,10 @@ func main() {
 
 	e := echo.New()
 	e.Use(echotrace.Middleware())
+	// TODO: make this less permissive
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+	}))
 
 	e.POST("/event", createEvent(s))
 	e.GET("/health", healthCheck(c))
