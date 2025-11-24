@@ -15,11 +15,23 @@ interface UseHealthCheckResult {
   isChecking: boolean;
 }
 
-const HEALTH_ENDPOINT = 'https://pdf.dogdish.cc/health';
-const CHECK_INTERVAL = 60000; // 1 minute in milliseconds
-const TIMEOUT_DURATION = 10000; // 10 seconds timeout
+interface UseHealthCheckOptions {
+  endpoint: string;
+  serviceName?: string;
+  checkInterval?: number;
+  timeout?: number;
+}
 
-export const useHealthCheck = (): UseHealthCheckResult => {
+const DEFAULT_CHECK_INTERVAL = 60000; // 1 minute in milliseconds
+const DEFAULT_TIMEOUT_DURATION = 10000; // 10 seconds timeout
+
+export const useHealthCheck = (options: UseHealthCheckOptions): UseHealthCheckResult => {
+  const { 
+    endpoint, 
+    serviceName = 'Service',
+    checkInterval = DEFAULT_CHECK_INTERVAL, 
+    timeout = DEFAULT_TIMEOUT_DURATION 
+  } = options;
   const [status, setStatus] = useState<HealthStatus>({
     isOnline: false,
     lastChecked: new Date(),
@@ -29,16 +41,16 @@ export const useHealthCheck = (): UseHealthCheckResult => {
   const [isChecking, setIsChecking] = useState(false);
 
   const checkHealth = useCallback(async (): Promise<void> => {
-    console.log('[HealthCheck] Starting health check...');
+    console.log(`[HealthCheck:${serviceName}] Starting health check...`);
     setIsChecking(true);
     const startTime = Date.now();
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_DURATION);
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      console.log('[HealthCheck] Fetching:', HEALTH_ENDPOINT);
-      const response = await fetch(HEALTH_ENDPOINT, {
+      console.log(`[HealthCheck:${serviceName}] Fetching:`, endpoint);
+      const response = await fetch(endpoint, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -48,17 +60,17 @@ export const useHealthCheck = (): UseHealthCheckResult => {
 
       clearTimeout(timeoutId);
       const responseTime = Date.now() - startTime;
-      console.log('[HealthCheck] Response received:', response.status, response.statusText);
+      console.log(`[HealthCheck:${serviceName}] Response received:`, response.status, response.statusText);
 
       if (response.ok) {
         try {
           // Check if response is JSON
           const contentType = response.headers.get('content-type');
-          console.log('[HealthCheck] Content-Type:', contentType);
+          console.log(`[HealthCheck:${serviceName}] Content-Type:`, contentType);
           
           if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
-            console.log('[HealthCheck] ✅ Parsed JSON:', data);
+            console.log(`[HealthCheck:${serviceName}] ✅ Parsed JSON:`, data);
             setStatus({
               isOnline: true,
               version: data.version || 'Unknown',
@@ -68,7 +80,7 @@ export const useHealthCheck = (): UseHealthCheckResult => {
             });
           } else {
             // Response is not JSON (might be HTML)
-            console.warn('[HealthCheck] ⚠️ Non-JSON response:', contentType);
+            console.warn(`[HealthCheck:${serviceName}] ⚠️ Non-JSON response:`, contentType);
             setStatus({
               isOnline: false,
               lastChecked: new Date(),
@@ -78,7 +90,7 @@ export const useHealthCheck = (): UseHealthCheckResult => {
           }
         } catch (parseError) {
           // JSON parsing failed
-          console.error('[HealthCheck] ❌ Parse error:', parseError);
+          console.error(`[HealthCheck:${serviceName}] ❌ Parse error:`, parseError);
           setStatus({
             isOnline: false,
             lastChecked: new Date(),
@@ -87,7 +99,7 @@ export const useHealthCheck = (): UseHealthCheckResult => {
           });
         }
       } else {
-        console.error('[HealthCheck] ❌ HTTP error:', response.status, response.statusText);
+        console.error(`[HealthCheck:${serviceName}] ❌ HTTP error:`, response.status, response.statusText);
         setStatus({
           isOnline: false,
           lastChecked: new Date(),
@@ -102,13 +114,13 @@ export const useHealthCheck = (): UseHealthCheckResult => {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           errorMessage = 'Request timeout';
-          console.warn('[HealthCheck] ⏱️ Request timed out');
+          console.warn(`[HealthCheck:${serviceName}] ⏱️ Request timed out`);
         } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
           errorMessage = 'Network error - service unreachable';
-          console.error('[HealthCheck] 🌐 Network error:', error.message);
+          console.error(`[HealthCheck:${serviceName}] 🌐 Network error:`, error.message);
         } else {
           errorMessage = error.message;
-          console.error('[HealthCheck] ❌ Error:', error);
+          console.error(`[HealthCheck:${serviceName}] ❌ Error:`, error);
         }
       }
 
@@ -116,26 +128,26 @@ export const useHealthCheck = (): UseHealthCheckResult => {
         isOnline: false,
         lastChecked: new Date(),
         error: errorMessage,
-        responseTime: responseTime > TIMEOUT_DURATION ? undefined : responseTime,
+        responseTime: responseTime > timeout ? undefined : responseTime,
       });
     } finally {
-      console.log('[HealthCheck] Check completed');
+      console.log(`[HealthCheck:${serviceName}] Check completed`);
       setIsChecking(false);
     }
-  }, []);
+  }, [endpoint, serviceName, timeout]);
 
   useEffect(() => {
     // Initial check
     checkHealth();
 
     // Set up interval for periodic checks
-    const intervalId = setInterval(checkHealth, CHECK_INTERVAL);
+    const intervalId = setInterval(checkHealth, checkInterval);
 
     // Cleanup interval on unmount
     return () => {
       clearInterval(intervalId);
     };
-  }, [checkHealth]);
+  }, [checkHealth, checkInterval]);
 
   return {
     status,
