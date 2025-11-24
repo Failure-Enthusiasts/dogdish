@@ -7,6 +7,7 @@ import { handleApiResponse, retryAsync } from '@/utils/errorUtils';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import HealthCheck from '@/components/HealthCheck';
+import AlertDialog from '@/components/AlertDialog';
 
 // Move data fetching outside component to prevent re-creation
 const fetchMenuData = async (): Promise<MenuData> => {
@@ -55,6 +56,27 @@ function AdminDashboardContent() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPdfUploadModal, setShowPdfUploadModal] = useState(false);
   const [showJsonPreviewModal, setShowJsonPreviewModal] = useState(false);
+  
+  // Alert Dialog state
+  const [alertDialog, setAlertDialog] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+    type: 'info' | 'success' | 'error' | 'warning';
+  }>({
+    isOpen: false,
+    message: '',
+    type: 'info'
+  });
+
+  // Helper function to show alert
+  const showAlert = (message: string, type: 'info' | 'success' | 'error' | 'warning' = 'info', title?: string) => {
+    setAlertDialog({ isOpen: true, message, type, title });
+  };
+
+  const closeAlert = () => {
+    setAlertDialog({ ...alertDialog, isOpen: false });
+  };
   
   // Edit states
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
@@ -301,7 +323,7 @@ function AdminDashboardContent() {
     if (file.type === 'application/pdf') {
       setSelectedFile(file);
     } else {
-      alert('Please select a PDF file');
+      showAlert('Please select a PDF file', 'error', 'Invalid File Type');
     }
   };
 
@@ -385,7 +407,7 @@ function AdminDashboardContent() {
       
     } catch (error) {
       console.error('Error uploading PDF:', error);
-      alert('Error processing PDF. Please try again.');
+      showAlert('Error processing PDF. Please try again.', 'error');
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -404,7 +426,7 @@ function AdminDashboardContent() {
       setSelectedFile(null);
       setShowJsonPreviewModal(false);
       
-      alert(`Successfully added ${parsedEvents.length} events from PDF!`);
+      showAlert(`Successfully added ${parsedEvents.length} events from PDF!`, 'success');
     }
   };
 
@@ -425,10 +447,10 @@ function AdminDashboardContent() {
       // Add to local state as well
       acceptParsedData();
       
-      alert('Events saved to database successfully!');
+      showAlert('Events saved to database successfully!', 'success');
     } catch (error) {
       console.error('Error saving events:', error);
-      alert('Error saving events to database. Please try again.');
+      showAlert('Error saving events to database. Please try again.', 'error');
     }
   };
 
@@ -817,7 +839,7 @@ function AdminDashboardContent() {
       <div className="fixed inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg shadow-2xl border border-gray-200 w-full max-w-md max-h-[90vh] flex flex-col">
           {/* Header */}
-          <div className="p-6 flex-shrink-0">
+          <div className="p-6 shrink-0">
             <h3 className="text-lg font-semibold mb-4">Upload PDF Menu</h3>
           </div>
 
@@ -874,7 +896,7 @@ function AdminDashboardContent() {
           </div>
 
           {/* Footer */}
-          <div className="flex space-x-3 justify-end p-6 flex-shrink-0">
+          <div className="flex space-x-3 justify-end p-6 shrink-0">
             <button
               onClick={() => {
                 setShowPdfUploadModal(false);
@@ -906,7 +928,7 @@ function AdminDashboardContent() {
       <div className="fixed inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg shadow-2xl border border-gray-200 w-full max-w-6xl max-h-[95vh] flex flex-col">
           {/* Fixed Header */}
-          <div className="flex justify-between items-center p-6 border-b border-gray-200 flex-shrink-0">
+          <div className="flex justify-between items-center p-6 border-b border-gray-200 shrink-0">
             <h3 className="text-lg font-semibold">Parsed Menu Data</h3>
             <button
               onClick={() => setShowJsonPreviewModal(false)}
@@ -923,7 +945,7 @@ function AdminDashboardContent() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
               {/* Formatted Preview */}
               <div className="flex flex-col h-full">
-                <h4 className="font-medium text-gray-900 mb-3 flex-shrink-0">Formatted Preview</h4>
+                <h4 className="font-medium text-gray-900 mb-3 shrink-0">Formatted Preview</h4>
                 <div className="bg-gray-50 rounded-lg p-4 flex-1 overflow-y-auto">
                 {parsedEvents?.map((event, index) => (
                   <div key={index} className="mb-6 bg-white rounded-lg p-4 border">
@@ -991,7 +1013,7 @@ function AdminDashboardContent() {
 
               {/* Raw JSON */}
               <div className="flex flex-col h-full">
-                <h4 className="font-medium text-gray-900 mb-3 flex-shrink-0">Raw JSON Data</h4>
+                <h4 className="font-medium text-gray-900 mb-3 shrink-0">Raw JSON Data</h4>
                 <div className="bg-gray-900 text-green-400 rounded-lg p-4 flex-1 overflow-y-auto">
                   <pre className="text-xs font-mono whitespace-pre-wrap">
                     {rawJsonData}
@@ -1002,7 +1024,7 @@ function AdminDashboardContent() {
           </div>
 
           {/* Fixed Footer */}
-          <div className="flex space-x-3 justify-end p-6 border-t border-gray-200 flex-shrink-0">
+          <div className="flex space-x-3 justify-end p-6 border-t border-gray-200 shrink-0">
             <button
               onClick={() => setShowJsonPreviewModal(false)}
               className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
@@ -1039,6 +1061,13 @@ function AdminDashboardContent() {
       <MenuItemModal type="dressing" />
       <PdfUploadModal />
       <JsonPreviewModal />
+      <AlertDialog
+        isOpen={alertDialog.isOpen}
+        onClose={closeAlert}
+        title={alertDialog.title}
+        message={alertDialog.message}
+        type={alertDialog.type}
+      />
       
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white shadow">
@@ -1054,7 +1083,7 @@ function AdminDashboardContent() {
                 endpoint="https://pdf.dogdish.cc/health"
                 serviceName="PDF Service"
                 serviceUrl="https://pdf.dogdish.cc"
-                showDetails={false} 
+                isShowDetails={false} 
                 className="hidden sm:flex" 
               />
               <Link href="/" className="text-gray-600 hover:text-gray-900">
