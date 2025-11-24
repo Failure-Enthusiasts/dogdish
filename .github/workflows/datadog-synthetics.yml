@@ -6,11 +6,6 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-# To get started:
-
-# 1. Add your Datadog API (DD_API_KEY) and Application Key (DD_APP_KEY) as secrets to your GitHub repository. For more information, see: https://docs.datadoghq.com/account_management/api-app-keys/.
-# 2. Start using the action within your workflow
-
 name: Run Datadog Synthetic tests
 
 on:
@@ -34,5 +29,11 @@ jobs:
         api_key: ${{secrets.DD_API_KEY}}
         app_key: ${{secrets.DD_APP_KEY}}
         test_search_query: 'tag:e2e-tests' #Modify this tag to suit your tagging strategy
+    - name: Test Optimization
+      uses: datadog/test-visibility-github-action@v2
+      with:
+        languages: js
+        api_key: ${{secrets.DD_API_KEY}}
+        site: datadoghq.com
 
 
