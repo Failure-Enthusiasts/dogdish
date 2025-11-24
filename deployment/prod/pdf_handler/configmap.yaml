@@ -10,7 +10,7 @@ data:
   LOG_LEVEL: "DEBUG"
   LOGGER_TYPE: "STDOUT"
   PH_PORT: "8000"
-  PH_DH_HOST: "http://database-handler-service.production.svc.cluster.local:8080"
+  PH_DH_HOST: "http://database-handler-service.production.svc.cluster.local:80"
   DD_ENV: "production"
   DD_SERVICE: "pdf-handler"
   DD_VERSION: "0.1.0-rc.0"

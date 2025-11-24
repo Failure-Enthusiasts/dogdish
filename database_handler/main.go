@@ -117,6 +117,8 @@ func main() {
 
 	c := config.Load()
 	s := storage.NewStorage().
+		WithHost(c.DatabaseHost).
+		WithPort(c.DatabasePort).
 		WithPassword(c.DatabasePassword).
 		WithUser(c.DatabaseUser).
 		WithDatabase(c.DatabaseName)

@@ -5,7 +5,7 @@ metadata:
   namespace: production
   labels:
     app: database-handler
-    version: 0.1.0-rc.1
+    version: 0.1.0-rc.3
     environment: production
 spec:
   replicas: 1
@@ -17,12 +17,12 @@ spec:
     metadata:
       labels:
         app: database-handler
-        version: 0.1.0-rc.1
+        version: 0.1.0-rc.3
         environment: production
     spec:
       containers:
       - name: database-handler
-        image: aldrickdev/database-handler:0.1.0-rc.1
+        image: aldrickdev/database-handler:0.1.0-rc.3
         ports:
         - containerPort: 80
           name: http
@@ -34,19 +34,24 @@ spec:
               key: DH_PORT
         - name: DH_DB_HOST
           valueFrom:
-            configMapKeyRef:
-              name: database-handler-config
-              key: DH_DB_HOST
+            secretKeyRef:
+              name: database-secrets
+              key: HOST
+        - name: DH_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: USER
         - name: DH_DB_PORT
           valueFrom:
-            configMapKeyRef:
-              name: database-handler-config
-              key: DH_DB_PORT
+            secretKeyRef:
+              name: database-secrets
+              key: PORT
         - name: DH_DB_NAME
           valueFrom:
-            configMapKeyRef:
-              name: database-handler-config
-              key: DH_DB_NAME
+            secretKeyRef:
+              name: database-secrets
+              key: DB_NAME
         - name: DH_VERSION
           valueFrom:
             configMapKeyRef:
