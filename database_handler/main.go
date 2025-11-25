@@ -108,7 +108,7 @@ func init() {
 	// }
 
 	// TODO: Add logic to set the log level based on environment variable
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 }
 
 func main() {

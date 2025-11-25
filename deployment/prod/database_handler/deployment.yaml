@@ -5,7 +5,7 @@ metadata:
   namespace: production
   labels:
     app: database-handler
-    version: 0.1.0-rc.3
+    version: 0.1.0-rc.4
     environment: production
 spec:
   replicas: 1
@@ -17,12 +17,12 @@ spec:
     metadata:
       labels:
         app: database-handler
-        version: 0.1.0-rc.3
+        version: 0.1.0-rc.4
         environment: production
     spec:
       containers:
       - name: database-handler
-        image: aldrickdev/database-handler:0.1.0-rc.3
+        image: aldrickdev/database-handler:0.1.0-rc.4
         ports:
         - containerPort: 80
           name: http
@@ -107,13 +107,13 @@ spec:
             path: /health
             port: 80
           initialDelaySeconds: 60
-          periodSeconds: 30
+          periodSeconds: 60
         readinessProbe:
           httpGet:
             path: /health
             port: 80
-          initialDelaySeconds: 10
-          periodSeconds: 10
+          initialDelaySeconds: 60
+          periodSeconds: 60
         volumeMounts:
         - name: apmsocketpath
           mountPath: /var/run/datadog

@@ -308,6 +308,7 @@ func (s *Storage) GetFrontPageEventIDs(ctx context.Context) ([]postgres.DogdishE
 	if err != nil {
 		log.Info("no previous event found")
 	} else {
+		log.WithFields(log.Fields{"event": previousEvent}).Debug("previous event")
 		events = append(events, previousEvent)
 	}
 
@@ -315,6 +316,7 @@ func (s *Storage) GetFrontPageEventIDs(ctx context.Context) ([]postgres.DogdishE
 	if err != nil {
 		log.Info("no current event found")
 	} else {
+		log.WithFields(log.Fields{"event": currentEvent}).Debug("current event")
 		events = append(events, currentEvent)
 	}
 
@@ -330,6 +332,7 @@ func (s *Storage) GetFrontPageEventIDs(ctx context.Context) ([]postgres.DogdishE
 	if err != nil {
 		log.Info("no future events found")
 	} else {
+		log.WithFields(log.Fields{"events": futureEvents}).Debug("future events")
 		events = append(events, futureEvents...)
 	}
 	log.WithFields(log.Fields{"events": events}).Info("events found")
