@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -18,6 +19,7 @@ type Config struct {
 	DatabasePort     uint
 	DatabaseName     string
 	Version          string
+	AllowedOrigins   []string
 }
 
 func Load() *Config {
@@ -29,6 +31,7 @@ func Load() *Config {
 		DatabasePort:     getEnvAsUintOrDefault(fmt.Sprintf("%s_DB_PORT", EnvPrefix), 5432),
 		DatabaseName:     getEnvOrDefault(fmt.Sprintf("%s_DB_NAME", EnvPrefix), "postgres"),
 		Version:          getEnvOrDefault(fmt.Sprintf("%s_VERSION", EnvPrefix), "0.0.0"),
+		AllowedOrigins:   getEnvAsSliceOrDefault(fmt.Sprintf("%s_ALLOWED_ORIGINS", EnvPrefix), []string{"*"}),
 	}
 	return config
 }
@@ -48,6 +51,14 @@ func getEnvAsUintOrDefault(key string, defaultValue uint) uint {
 		}
 		fmt.Printf("failed to convert environment variable %s to int, using default\n", key)
 		return defaultValue
+	}
+	fmt.Printf("Environment variable %s not set, using default\n", key)
+	return defaultValue
+}
+
+func getEnvAsSliceOrDefault(key string, defaultValue []string) []string {
+	if value := os.Getenv(key); value != "" {
+		return strings.Split(value, ",")
 	}
 	fmt.Printf("Environment variable %s not set, using default\n", key)
 	return defaultValue
