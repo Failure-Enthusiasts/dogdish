@@ -125,7 +125,7 @@ func main() {
 	e.Use(echotrace.Middleware())
 	// TODO: make this less permissive
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},
+		AllowOrigins: c.AllowedOrigins,
 	}))
 
 	e.POST("/event", createEvent(s))
