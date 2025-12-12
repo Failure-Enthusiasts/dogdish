@@ -77,6 +77,8 @@ export default function AlertDialog({
 
   const styles = getTypeStyles();
   const displayTitle = title || (type.charAt(0).toUpperCase() + type.slice(1));
+  const titleId = "alert-dialog-title";
+  const descId = "alert-dialog-description";
 
   return (
     <div
@@ -84,16 +86,35 @@ export default function AlertDialog({
       onClick={onClose}
     >
       <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descId}
         className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-200 animate-in fade-in duration-200"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
       >
         <div className="flex items-start space-x-4">
-          <div className={`${styles.iconBg} ${styles.iconColor} rounded-full w-10 h-10 flex items-center justify-center shrink-0 text-xl font-bold`}>
+          <div
+            className={`${styles.iconBg} ${styles.iconColor} rounded-full w-10 h-10 flex items-center justify-center shrink-0 text-xl font-bold`}
+            aria-hidden="true"
+          >
             {styles.icon}
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-2 text-gray-900">{displayTitle}</h3>
-            <p className="text-gray-600 mb-6">{message}</p>
+            <h3
+              id={titleId}
+              className="text-lg font-semibold mb-2 text-gray-900"
+            >
+              {displayTitle}
+            </h3>
+            <p
+              id={descId}
+              className="text-gray-600 mb-6"
+            >
+              {message}
+            </p>
             <div className="flex justify-end">
               <button
                 onClick={onClose}
@@ -109,4 +130,3 @@ export default function AlertDialog({
     </div>
   );
 }
-
